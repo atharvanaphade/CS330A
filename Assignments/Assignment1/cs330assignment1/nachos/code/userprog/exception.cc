@@ -167,6 +167,24 @@ ExceptionHandler(ExceptionType which)
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
         machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
+    else if ((which == SyscallException) && (type == SysCall_GetPA)) {
+        int virtAddr = machine->ReadRegister(4); // argument passed
+        int physAddr, vpn, offset, pageFrame;
+
+        //based on machine/translate.cc
+        vpn = (unsigned) virtAddr / PageSize;
+        offset = (unsigned) virtAddr % PageSize;
+        pageFrame = (&(machine->KernelPageTable[vpn]))->physicalPage;
+        physAddr = pageFrame * PageSize + offset;
+
+        if ((vpn >= machine->pageTableSize) || (!machine->KernelPageTable[vpn].valid) || (pageFrame >= NumPhysPages)) machine->WriteRegister(2,-1);
+        else machine->WriteRegister(2,physAddr);
+
+        // Advance program counters.
+        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
+    }
     else{
         printf("Unexpected user mode exception %d %d\n", which, type);
         ASSERT(FALSE);
