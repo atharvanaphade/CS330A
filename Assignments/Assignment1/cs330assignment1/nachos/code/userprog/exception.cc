@@ -54,7 +54,7 @@ static Semaphore *writeDone;
 static void ReadAvail(int arg) { readAvail->V(); }
 static void WriteDone(int arg) { writeDone->V(); }
 void SortedInsert(int ftime, NachOSThread* cthread);
-struct node** Waitlist;
+struct node* Waitlist;
 
 static void ConvertIntToHex (unsigned v, Console *console)
 {

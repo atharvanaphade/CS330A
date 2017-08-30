@@ -25,17 +25,17 @@ struct node{
     struct node* next;
 };
 
-extern struct node** Waitlist;
+extern struct node* Waitlist=NULL;
 
 extern void SortedInsert(int ftime, NachOSThread* cthread){
-    node* tmp=(*Waitlist);
+    node* tmp=(Waitlist);
     node* cnode = new node;
     cnode->next=NULL;
     cnode->cur_thread=cthread;
     cnode->finish_time=ftime;
     if(tmp == NULL || tmp->finish_time >= ftime){
 	cnode->next=tmp;
-	(*Waitlist) = cnode;
+	(Waitlist) = cnode;
     }else{
 	while(tmp->next != NULL && (tmp->next)->finish_time < ftime){
 	    tmp=tmp->next;
@@ -46,9 +46,9 @@ extern void SortedInsert(int ftime, NachOSThread* cthread){
 }
 
 extern NachOSThread* Dequeue(){
-    node* tmp=(*Waitlist);
+    node* tmp=(Waitlist);
     node* cur=tmp->next;
-    (*Waitlist)=cur;
+    (Waitlist)=cur;
     return tmp->cur_thread;
 }
 
@@ -94,13 +94,13 @@ extern void Cleanup();
 static void
 TimerInterruptHandler(int dummy)
 {
-    node* cnode=(*Waitlist);
+    node* cnode=(Waitlist);
     while(cnode!= NULL && cnode->finish_time <= stats->totalTicks){
 	NachOSThread* ready_thread=Dequeue();
 	interrupt->SetLevel(IntOff);
 	scheduler->MoveThreadToReadyQueue(ready_thread);
 	interrupt->SetLevel(IntOn);
-	cnode=(*Waitlist);
+	cnode=(Waitlist);
     }
     if (interrupt->getStatus() != IdleMode)
 	interrupt->YieldOnReturn();
