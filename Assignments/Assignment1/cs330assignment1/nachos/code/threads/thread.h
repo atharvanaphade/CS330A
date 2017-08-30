@@ -36,7 +36,6 @@
 
 #ifndef THREAD_H
 #define THREAD_H
-int PIDint = 0;
 #include "copyright.h"
 #include "utility.h"
 
@@ -87,7 +86,7 @@ class NachOSThread {
 					// is called
 
     // basic thread operations
-
+    static int PIDint;
     int getPID(){return pid;}
     int getPPID(){return ppid;}
     void ThreadFork(VoidFunctionPtr func, int arg); 	// Make thread run (*func)(arg)
