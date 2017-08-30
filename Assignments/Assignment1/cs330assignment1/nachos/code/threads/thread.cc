@@ -34,6 +34,7 @@
 int PIDint = 0;
 NachOSThread::NachOSThread(char* threadName)
 {
+    NumInstr = 0;
     PIDint = PIDint+1;
     pid = PIDint;
     if (pid==1)

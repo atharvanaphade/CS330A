@@ -86,6 +86,7 @@ class NachOSThread {
 					// is called
 
     // basic thread operations
+    int NumInstr;
     int getPID(){return pid;}
     int getPPID(){return ppid;}
     void ThreadFork(VoidFunctionPtr func, int arg); 	// Make thread run (*func)(arg)
