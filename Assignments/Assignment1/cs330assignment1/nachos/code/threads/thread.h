@@ -37,7 +37,6 @@
 #ifndef THREAD_H
 #define THREAD_H
 int PIDint = 0;
-#endif
 #include "copyright.h"
 #include "utility.h"
 
