@@ -18,6 +18,41 @@ Statistics *stats;			// performance metrics
 Timer *timer;				// the hardware timer device,
 					// for invoking context switches
 
+
+struct node{
+    int finish_time;
+    NachOSThread* cur_thread;
+    struct node* next;
+};
+
+extern node** Waitlist;
+
+extern void sorted_insert(int ftime, NachOSThread* cthread){
+    node* tmp=(*Waitlist);
+    node* cnode = new node;
+    cnode->next=NULL;
+    cnode->cur_thread=cthread;
+    cthread->finish_time=ftime;
+    if(tmp == NULL || tmp->finish_time >= ftime){
+	cnode->next=tmp;
+	(*Waitlist) = cnode;
+    }else{
+	while(tmp->next != NULL && (tmp->next)->finish_time < ftime){
+	    tmp=tmp->next;
+	}
+	cnode->next=tmp->next;
+	tmp->next=cnode;
+    }
+}
+
+extern NachOSThread* dequeue(){
+    node* tmp=(*Waitlist);
+    node* cur=tmp->next;
+    (*Waitlist)=cur;
+    return tmp->cur_thread;
+}
+
+
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
 #endif
@@ -59,6 +94,14 @@ extern void Cleanup();
 static void
 TimerInterruptHandler(int dummy)
 {
+    node* cnode=(*Waitlist);
+    while(cnode!= NULL && cnode->finish_time <= stats->totalTicks){
+	NachOSThread* ready_thread=dequeue();
+	interrupt->ChangeLevel(IntOn,IntOff);
+	MoveThreadToReadyQueue(ready_thread);
+	interrupt->ChangeLevel(IntOff,IntOn);
+	cnode=(*Waitlist);
+    }
     if (interrupt->getStatus() != IdleMode)
 	interrupt->YieldOnReturn();
 }
