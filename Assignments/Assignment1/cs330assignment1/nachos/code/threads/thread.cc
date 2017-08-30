@@ -34,6 +34,9 @@
 
 NachOSThread::NachOSThread(char* threadName)
 {
+    ppid = PIDint;
+    PIDint = PIDint+1;
+    pid = PIDint;
     name = threadName;
     stackTop = NULL;
     stack = NULL;
