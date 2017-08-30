@@ -25,14 +25,14 @@ struct node{
     struct node* next;
 };
 
-extern node** Waitlist;
+extern struct node** Waitlist;
 
-extern void sorted_insert(int ftime, NachOSThread* cthread){
+extern void SortedInsert(int ftime, NachOSThread* cthread){
     node* tmp=(*Waitlist);
     node* cnode = new node;
     cnode->next=NULL;
     cnode->cur_thread=cthread;
-    cthread->finish_time=ftime;
+    cnode->finish_time=ftime;
     if(tmp == NULL || tmp->finish_time >= ftime){
 	cnode->next=tmp;
 	(*Waitlist) = cnode;
@@ -45,7 +45,7 @@ extern void sorted_insert(int ftime, NachOSThread* cthread){
     }
 }
 
-extern NachOSThread* dequeue(){
+extern NachOSThread* Dequeue(){
     node* tmp=(*Waitlist);
     node* cur=tmp->next;
     (*Waitlist)=cur;
@@ -96,9 +96,9 @@ TimerInterruptHandler(int dummy)
 {
     node* cnode=(*Waitlist);
     while(cnode!= NULL && cnode->finish_time <= stats->totalTicks){
-	NachOSThread* ready_thread=dequeue();
+	NachOSThread* ready_thread=Dequeue();
 	interrupt->SetLevel(IntOff);
-	MoveThreadToReadyQueue(ready_thread);
+	scheduler->MoveThreadToReadyQueue(ready_thread);
 	interrupt->SetLevel(IntOn);
 	cnode=(*Waitlist);
     }
