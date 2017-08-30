@@ -186,7 +186,7 @@ ExceptionHandler(ExceptionType which)
         machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
     else if ((which == SyscallException) && (type == SysCall_GetPID)) {
-        machine->WriteRegister(2,currentThread.getPID());
+        machine->WriteRegister(2,currentThread->getPID());
 
         // Advance program counters.
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
@@ -194,7 +194,7 @@ ExceptionHandler(ExceptionType which)
         machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
     else if ((which == SyscallException) && (type == SysCall_GetPPID)) {
-        machine->WriteRegister(2,currentThread.getPPID());
+        machine->WriteRegister(2,currentThread->getPPID());
 
         // Advance program counters.
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));

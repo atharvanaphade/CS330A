@@ -36,7 +36,8 @@
 
 #ifndef THREAD_H
 #define THREAD_H
-
+int PIDint = 0;
+#endif
 #include "copyright.h"
 #include "utility.h"
 
@@ -72,7 +73,6 @@ extern void ThreadPrint(int arg);
 //    
 //  Some threads also belong to a user address space; threads
 //  that only run in the kernel have a NULL address space.
-int PIDint = 0;
 class NachOSThread {
   private:
     // NOTE: DO NOT CHANGE the order of these first two members.
