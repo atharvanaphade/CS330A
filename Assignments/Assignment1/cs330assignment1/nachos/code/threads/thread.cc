@@ -32,7 +32,7 @@
 //	"threadName" is an arbitrary string, useful for debugging.
 //----------------------------------------------------------------------
 
-NachOSThread::PIDint = 0;
+int NachOSThread::PIDint = 0;
 
 NachOSThread::NachOSThread(char* threadName)
 {
