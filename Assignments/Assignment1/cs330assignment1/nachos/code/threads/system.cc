@@ -38,7 +38,7 @@ extern void sorted_insert(int ftime, NachOSThread* cthread){
 	cnode->next=tmp;
 	(*Waitlist) = cnode;
     }else{
-	while(tmp->next != NULL || (tmp->next)->finish_time < ftime){
+	while(tmp->next != NULL && (tmp->next)->finish_time < ftime){
 	    tmp=tmp->next;
 	}
 	cnode->next=tmp->next;
@@ -96,6 +96,14 @@ extern void Cleanup();
 static void
 TimerInterruptHandler(int dummy)
 {
+    node* cnode=(*Waitlist);
+    while(cnode!= NULL && cnode->finish_time <= stats->totalTicks){
+	NachOSThread* ready_thread=dequeue();
+	interrupt->ChangeLevel(IntOn,IntOff);
+	MoveThreadToReadyQueue(ready_thread);
+	interrupt->ChangeLevel(IntOff,IntOn);
+	cnode=(*Waitlist);
+    }
     if (interrupt->getStatus() != IdleMode)
 	interrupt->YieldOnReturn();
 }
