@@ -89,6 +89,8 @@ class NachOSThread {
 
     // basic thread operations
 
+    int getPID(){return pid;}
+    int getPPID(){return ppid;}
     void ThreadFork(VoidFunctionPtr func, int arg); 	// Make thread run (*func)(arg)
     void YieldCPU();  				// Relinquish the CPU if any 
 						// other thread is runnable
