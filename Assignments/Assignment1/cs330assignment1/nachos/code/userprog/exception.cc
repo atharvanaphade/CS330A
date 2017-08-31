@@ -227,21 +227,23 @@ ExceptionHandler(ExceptionType which)
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
         machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
-    else if ((which == SyscallException) && (type == SysCall_Sleep)) {
-        int stime = machine->ReadRegister(4); // argument passed
-        if(stime==0)
-            currentThread->YieldCPU();
-        else{
-            interrupt->SetLevel(IntOff);
-            SortedInsert(stats->totalTicks+stime,currentThread);
-            currentThread->PutThreadToSleep();
-            interrupt->SetLevel(IntOn);
-        }
-        // Advance program counters.
-        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
-        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
-        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
-    }
+    /*
+     *else if ((which == SyscallException) && (type == SysCall_Sleep)) {
+     *    int stime = machine->ReadRegister(4); // argument passed
+     *    if(stime==0)
+     *        currentThread->YieldCPU();
+     *    else{
+     *        interrupt->SetLevel(IntOff);
+     *        //SortedInsert(stats->totalTicks+stime,currentThread);
+     *        currentThread->PutThreadToSleep();
+     *        interrupt->SetLevel(IntOn);
+     *    }
+     *    // Advance program counters.
+     *    machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+     *    machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+     *    machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
+     *}
+     */
     else if((which == SyscallException) && (type == SysCall_Exit)){
        //Call FinishThread() for the given thread
        //That implements whatever is written in the NachOS doc.
