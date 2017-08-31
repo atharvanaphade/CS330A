@@ -231,10 +231,10 @@ ExceptionHandler(ExceptionType which)
         if(stime==0)
             currentThread->YieldCPU();
         else{
-            // IntStatus temp = interrupt->SetLevel(IntOff);
+            IntStatus temp = interrupt->SetLevel(IntOff);
             Waitlist->SortedInsert((void*)currentThread, stats->totalTicks+stime);
-            // currentThread->PutThreadToSleep();
-            // (void) interrupt->SetLevel(temp);
+            currentThread->PutThreadToSleep();
+            (void) interrupt->SetLevel(temp);
         }
         // Advance program counters.
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));

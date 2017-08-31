@@ -60,13 +60,13 @@ extern void Cleanup();
 static void
 TimerInterruptHandler(int dummy)
 {
-    // if(!(Waitlist->IsEmpty())){
-    //     while(!(Waitlist->IsEmpty()) && Waitlist->TopKey()<=stats->totalTicks){
-    //         // IntStatus temp = interrupt->SetLevel(IntOff);
-    //         scheduler->MoveThreadToReadyQueue((NachOSThread *)Waitlist->SortedRemove(NULL));
-    //         // (void) interrupt->SetLevel(temp);
-    //     }
-    // }
+    if(!(Waitlist->IsEmpty())){
+        while(!(Waitlist->IsEmpty()) && Waitlist->TopKey()<=stats->totalTicks){
+            // IntStatus temp = interrupt->SetLevel(IntOff);
+            scheduler->MoveThreadToReadyQueue((NachOSThread *)Waitlist->SortedRemove(NULL));
+            // (void) interrupt->SetLevel(temp);
+        }
+    }
     if (interrupt->getStatus() != IdleMode)
 	interrupt->YieldOnReturn();
 }
@@ -87,6 +87,7 @@ Initialize(int argc, char **argv)
     int argCount;
     char* debugArgs = "";
     bool randomYield = FALSE;
+    Waitlist = new List;
 
     initializedConsoleSemaphores = false;
 
