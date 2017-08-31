@@ -225,6 +225,35 @@ ExceptionHandler(ExceptionType which)
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
         machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
+    else if ((which == SyscallException) && (type == SysCall_Exec)) {
+        vaddr = machine->ReadRegister(4);
+        machine->ReadMem(vaddr, 1, &memval);
+        char file_path[100];
+        int i=0;
+        while ((*(char*)&memval) != '\0') {
+            file_path[i] = *(char*)&memval;
+            i++;
+            vaddr++;
+            machine->ReadMem(vaddr, 1, &memval);
+        }
+        file_path[i] = '\0';
+        OpenFile *executable = fileSystem->Open(file_path);
+
+        if (executable == NULL) {
+    	       ASSERT(FALSE);
+        }
+        currentThread->space = new ProcessAddressSpace(executable);
+
+        delete executable;			// close file
+
+        currentThread->space->InitUserModeCPURegisters();		// set the initial register values
+        currentThread->space->RestoreContextOnSwitch();		// load page table register
+
+        machine->Run();			// jump to the user progam
+        ASSERT(FALSE);			// machine->Run never returns;
+    					// the address space exits
+    					// by doing the syscall "exit"
+    }
     else{
         printf("Unexpected user mode exception %d %d\n", which, type);
         ASSERT(FALSE);
