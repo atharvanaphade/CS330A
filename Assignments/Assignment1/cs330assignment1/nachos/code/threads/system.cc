@@ -7,7 +7,6 @@
 
 #include "copyright.h"
 #include "system.h"
-
 // This defines *all* of the global data structures used by Nachos.
 // These are all initialized and de-allocated by this file.
 
@@ -17,7 +16,8 @@ ProcessScheduler *scheduler;			// the ready list
 Interrupt *interrupt;			// interrupt status
 Statistics *stats;			// performance metrics
 Timer *timer;				// the hardware timer device,
-					// for invoking context switches
+                            // for invoking context switches
+List *Waitlist;  //waiting queue
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -40,7 +40,6 @@ bool initializedConsoleSemaphores;
 // External definition, to allow us to take a pointer to this function
 extern void Cleanup();
 
-
 //----------------------------------------------------------------------
 // TimerInterruptHandler
 // 	Interrupt handler for the timer device.  The timer device is
@@ -61,6 +60,13 @@ extern void Cleanup();
 static void
 TimerInterruptHandler(int dummy)
 {
+    if(!(Waitlist->IsEmpty())){
+        while(!(Waitlist->IsEmpty()) && Waitlist->TopKey()<=stats->totalTicks){
+            // IntStatus temp = interrupt->SetLevel(IntOff);
+            scheduler->MoveThreadToReadyQueue((NachOSThread *)Waitlist->SortedRemove(NULL));
+            // (void) interrupt->SetLevel(temp);
+        }
+    }
     if (interrupt->getStatus() != IdleMode)
 	interrupt->YieldOnReturn();
 }
@@ -81,6 +87,7 @@ Initialize(int argc, char **argv)
     int argCount;
     char* debugArgs = "";
     bool randomYield = FALSE;
+    Waitlist = new List;
 
     initializedConsoleSemaphores = false;
 

@@ -54,6 +54,7 @@ static Semaphore *writeDone;
 static void ReadAvail(int arg) { readAvail->V(); }
 static void WriteDone(int arg) { writeDone->V(); }
 
+
 static void ConvertIntToHex (unsigned v, Console *console)
 {
    unsigned x;
@@ -253,6 +254,21 @@ ExceptionHandler(ExceptionType which)
         ASSERT(FALSE);			// machine->Run never returns;
     					// the address space exits
     					// by doing the syscall "exit"
+    }
+    else if ((which == SyscallException) && (type == SysCall_Sleep)) {
+        int stime = machine->ReadRegister(4); // argument passed
+        if(stime==0)
+            currentThread->YieldCPU();
+        else{
+            IntStatus temp = interrupt->SetLevel(IntOff);
+            Waitlist->SortedInsert((void*)currentThread, stats->totalTicks+stime);
+            currentThread->PutThreadToSleep();
+            (void) interrupt->SetLevel(temp);
+        }
+        // Advance program counters.
+        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
     else{
         printf("Unexpected user mode exception %d %d\n", which, type);
