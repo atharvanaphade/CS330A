@@ -53,8 +53,7 @@ static Semaphore *readAvail;
 static Semaphore *writeDone;
 static void ReadAvail(int arg) { readAvail->V(); }
 static void WriteDone(int arg) { writeDone->V(); }
-void SortedInsert(int ftime, NachOSThread* cthread);
-struct node** Waitlist;
+
 
 static void ConvertIntToHex (unsigned v, Console *console)
 {
@@ -232,10 +231,10 @@ ExceptionHandler(ExceptionType which)
         if(stime==0)
             currentThread->YieldCPU();
         else{
-            IntStatus temp = interrupt->SetLevel(IntOff);
-            SortedInsert(stats->totalTicks+stime,currentThread);
-            currentThread->PutThreadToSleep();
-            (void) interrupt->SetLevel(temp);
+            // IntStatus temp = interrupt->SetLevel(IntOff);
+            Waitlist->SortedInsert((void*)currentThread, stats->totalTicks+stime);
+            // currentThread->PutThreadToSleep();
+            // (void) interrupt->SetLevel(temp);
         }
         // Advance program counters.
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));

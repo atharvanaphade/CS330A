@@ -17,7 +17,7 @@ Interrupt *interrupt;			// interrupt status
 Statistics *stats;			// performance metrics
 Timer *timer;				// the hardware timer device,
                             // for invoking context switches
-ListElement *Waitlist;  //waiting queue
+List *Waitlist;  //waiting queue
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -60,12 +60,13 @@ extern void Cleanup();
 static void
 TimerInterruptHandler(int dummy)
 {
-    while(!(Waitlist->IsEmpty()) && Waitlist->TopKey()<=stats->totalTicks){
-        IntStatus temp = interrupt->SetLevel(IntOff);
-        scheduler->MoveThreadToReadyQueue((NachOSThread *)SortedRemove(NULL));
-        (void) interrupt->SetLevel(temp);
-    }
-    
+    // if(!(Waitlist->IsEmpty())){
+    //     while(!(Waitlist->IsEmpty()) && Waitlist->TopKey()<=stats->totalTicks){
+    //         // IntStatus temp = interrupt->SetLevel(IntOff);
+    //         scheduler->MoveThreadToReadyQueue((NachOSThread *)Waitlist->SortedRemove(NULL));
+    //         // (void) interrupt->SetLevel(temp);
+    //     }
+    // }
     if (interrupt->getStatus() != IdleMode)
 	interrupt->YieldOnReturn();
 }
