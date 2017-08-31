@@ -242,6 +242,15 @@ ExceptionHandler(ExceptionType which)
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
         machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
+    else if((which == SyscallException) && (type == SysCall_Exit)){
+       //Call FinishThread() for the given thread
+       //That implements whatever is written in the NachOS doc.
+       currentThread->FinishThread();
+       // Advance program counters.
+       machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+       machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+       machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
+    }
     else{
         printf("Unexpected user mode exception %d %d\n", which, type);
         ASSERT(FALSE);
