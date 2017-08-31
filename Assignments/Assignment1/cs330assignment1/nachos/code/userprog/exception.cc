@@ -232,10 +232,10 @@ ExceptionHandler(ExceptionType which)
         if(stime==0)
             currentThread->YieldCPU();
         else{
-            interrupt->SetLevel(IntOff);
+            IntStatus temp = interrupt->SetLevel(IntOff);
             SortedInsert(stats->totalTicks+stime,currentThread);
             currentThread->PutThreadToSleep();
-            interrupt->SetLevel(IntOn);
+            (void) interrupt->SetLevel(temp);
         }
         // Advance program counters.
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
