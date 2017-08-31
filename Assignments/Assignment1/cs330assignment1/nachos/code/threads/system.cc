@@ -16,6 +16,7 @@ ProcessScheduler *scheduler;			// the ready list
 Interrupt *interrupt;			// interrupt status
 Statistics *stats;			// performance metrics
 Timer *timer;				// the hardware timer device,
+<<<<<<< HEAD
 					// for invoking context switches
 
 
@@ -54,6 +55,10 @@ Timer *timer;				// the hardware timer device,
  *}
  *
  */
+=======
+                            // for invoking context switches
+List *Waitlist;  //waiting queue
+>>>>>>> ed956e045c440e7c7bf16748990953600bb68b6d
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -96,16 +101,13 @@ extern void Cleanup();
 static void
 TimerInterruptHandler(int dummy)
 {
-    /*
-     *node* cnode=(*Waitlist);
-     *while(cnode!= NULL && cnode->finish_time <= stats->totalTicks){
-     *    NachOSThread* ready_thread=Dequeue();
-     *    interrupt->SetLevel(IntOff);
-     *    scheduler->MoveThreadToReadyQueue(ready_thread);
-     *    interrupt->SetLevel(IntOn);
-     *    cnode=(*Waitlist);
-     *}
-     */
+    if(!(Waitlist->IsEmpty())){
+        while(!(Waitlist->IsEmpty()) && Waitlist->TopKey()<=stats->totalTicks){
+            // IntStatus temp = interrupt->SetLevel(IntOff);
+            scheduler->MoveThreadToReadyQueue((NachOSThread *)Waitlist->SortedRemove(NULL));
+            // (void) interrupt->SetLevel(temp);
+        }
+    }
     if (interrupt->getStatus() != IdleMode)
 	interrupt->YieldOnReturn();
 }
@@ -126,6 +128,7 @@ Initialize(int argc, char **argv)
     int argCount;
     char* debugArgs = "";
     bool randomYield = FALSE;
+    Waitlist = new List;
 
     initializedConsoleSemaphores = false;
 

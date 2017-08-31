@@ -53,8 +53,12 @@ static Semaphore *readAvail;
 static Semaphore *writeDone;
 static void ReadAvail(int arg) { readAvail->V(); }
 static void WriteDone(int arg) { writeDone->V(); }
+<<<<<<< HEAD
 //void SortedInsert(int ftime, NachOSThread* cthread);
 //struct node** Waitlist;
+=======
+
+>>>>>>> ed956e045c440e7c7bf16748990953600bb68b6d
 
 static void ConvertIntToHex (unsigned v, Console *console)
 {
@@ -227,31 +231,28 @@ ExceptionHandler(ExceptionType which)
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
         machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
-    /*
-     *else if ((which == SyscallException) && (type == SysCall_Sleep)) {
-     *    int stime = machine->ReadRegister(4); // argument passed
-     *    if(stime==0)
-     *        currentThread->YieldCPU();
-     *    else{
-     *        interrupt->SetLevel(IntOff);
-     *        //SortedInsert(stats->totalTicks+stime,currentThread);
-     *        currentThread->PutThreadToSleep();
-     *        interrupt->SetLevel(IntOn);
-     *    }
-     *    // Advance program counters.
-     *    machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
-     *    machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
-     *    machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
-     *}
-     */
-    else if((which == SyscallException) && (type == SysCall_Exit)){
-       //Call FinishThread() for the given thread
-       //That implements whatever is written in the NachOS doc.
-       currentThread->FinishThread();
-       // Advance program counters.
-       machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
-       machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
-       machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
+    else if ((which == SyscallException) && (type == SysCall_Sleep)) {
+        int stime = machine->ReadRegister(4); // argument passed
+        if(stime==0)
+            currentThread->YieldCPU();
+        else{
+            IntStatus temp = interrupt->SetLevel(IntOff);
+            Waitlist->SortedInsert((void*)currentThread, stats->totalTicks+stime);
+            currentThread->PutThreadToSleep();
+            (void) interrupt->SetLevel(temp);
+        }
+        // Advance program counters.
+        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
+    }
+    else if((which == SyscallException) && (type == Syscall_Exit))
+    {
+       ThreadFinish();
+       
+        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
     else{
         printf("Unexpected user mode exception %d %d\n", which, type);
