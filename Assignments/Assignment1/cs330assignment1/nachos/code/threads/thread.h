@@ -84,7 +84,9 @@ class NachOSThread {
 					// NOTE -- thread being deleted
 					// must not be running when delete
 					// is called
-
+    static int CurAvailablePage;
+    static int NumOfThreads;
+    static int CurMaxPage; // Index of maximum page currentely available.
     // basic thread operations
     int NumInstr;
     int getPID(){return pid;}
@@ -128,10 +130,12 @@ class NachOSThread {
   public:
     void SaveUserState();		// save user-level register state
     void RestoreUserState();		// restore user-level register state
+    void setUserRegisters(int idx, int val){ userRegisters[idx]=val;}
 
     ProcessAddressSpace *space;			// User code this thread is running.
 #endif
 };
+
 
 // Magical machine-dependent routines, defined in switch.s
 

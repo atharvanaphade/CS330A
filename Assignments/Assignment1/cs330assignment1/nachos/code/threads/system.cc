@@ -87,6 +87,7 @@ Initialize(int argc, char **argv)
     int argCount;
     char* debugArgs = "";
     bool randomYield = FALSE;
+
     Waitlist = new List;
 
     initializedConsoleSemaphores = false;

@@ -32,8 +32,12 @@
 //	"threadName" is an arbitrary string, useful for debugging.
 //----------------------------------------------------------------------
 int PIDint = 0;
+int NachOSThread::NumOfThreads=0;
+int NachOSThread::CurMaxPage=0;
+int NachOSThread::CurAvailablePage=0;
 NachOSThread::NachOSThread(char* threadName)
 {
+    NumOfThreads++;
     NumInstr = 0;
     PIDint = PIDint+1;
     pid = PIDint;
@@ -151,6 +155,7 @@ NachOSThread::CheckOverflow()
 void
 NachOSThread::FinishThread ()
 {
+    NumOfThreads--;
     (void) interrupt->SetLevel(IntOff);
     ASSERT(this == currentThread);
 
