@@ -73,6 +73,7 @@ ProcessAddressSpace::ProcessAddressSpace(OpenFile *executable)
 			+ UserStackSize;	// we need to increase the size
 						// to leave room for the stack
     numVirtualPages = divRoundUp(size, PageSize);
+    NachOSThread::CurMaxPage=numVirtualPages; // Updating the availabe page index
     size = numVirtualPages * PageSize;
 
     ASSERT(numVirtualPages <= NumPhysPages);		// check we're not trying

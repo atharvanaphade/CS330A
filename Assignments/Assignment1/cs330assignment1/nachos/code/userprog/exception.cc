@@ -240,15 +240,48 @@ ExceptionHandler(ExceptionType which)
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
         machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
-    else if((which == SyscallException) && (type == Syscall_Exit))
+    else if((which == SyscallException) && (type == SysCall_Exit))
     {
-       ThreadFinish();
-       
+	// One case to be handled: when a child thread terminates, we must send a signal to
+	// the parent thread in case it called wait(NULL) in the program waiting for the child
+	// to terminate.
+	if(NachOSThread::NumOfThreads == 1){
+	    interrupt->Halt();
+	}else{
+       	    currentThread->FinishThread();
+      	} 
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
         machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
-    }
-    else{
+    }else if((which == SyscallException) && (type == SysCall_Fork)){
+		// child naming still left!
+		NachOSThread* childThread = new NachOSThread("child");
+
+		//
+		// The below code works only for calling main initially
+		// I guess we must write our own constructer for the child
+		// OpenFile *childExecutable = fileSystem->Open(currentThread->exe);
+		// childThread->space = new ProcessAddressSpace(childExecutable);	
+		//
+		
+		
+		//set up the page table
+		// copy the contents of the parent space
+
+		// Doubt: SaveUserState() and setting return register to be done after
+		//        incrementing PC or before?
+		childThread->SaveUserState(); 
+		//childThread->userRegisters[2]=0; /* Not Working */
+		childThread->setUserRegisters(2,0);
+
+		//  CreateThreadStack()
+		// func that does -  threads needed to be destroyed are destroyed, and the registers and the address space of the scheduled thread are restored
+		// func also - call run 
+		// place child pid in return 
+        // Advance program counters.
+        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+	}else{
         printf("Unexpected user mode exception %d %d\n", which, type);
         ASSERT(FALSE);
     }
