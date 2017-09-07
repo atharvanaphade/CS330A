@@ -60,6 +60,7 @@ enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED };
 
 // external function, dummy routine whose sole job is to call NachOSThread::Print
 extern void ThreadPrint(int arg);
+extern void func(int);
 extern int PIDint;
 // The following class defines a "thread control block" -- which
 // represents a single thread of execution.

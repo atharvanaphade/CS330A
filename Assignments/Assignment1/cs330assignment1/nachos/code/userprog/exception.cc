@@ -267,19 +267,21 @@ ExceptionHandler(ExceptionType which)
 		//set up the page table
 		// copy the contents of the parent space
 
-		// Doubt: SaveUserState() and setting return register to be done after
-		//        incrementing PC or before?
-		childThread->SaveUserState(); 
-		//childThread->userRegisters[2]=0; /* Not Working */
-		childThread->setUserRegisters(2,0);
-
+                  
 		//  CreateThreadStack()
 		// func that does -  threads needed to be destroyed are destroyed, and the registers and the address space of the scheduled thread are restored
 		// func also - call run 
+                childThread->ThreadFork(func,0);
 		// place child pid in return 
+         machine->WriteRegister(2,childThread->getPID());
         // Advance program counters.
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+		// Doubt: SaveUserState() and setting return register to be done after
+		//        incrementing PC or before?
+        childThread->SaveUserState(); 
+                //childThread->userRegisters[2]=0; /* Not Working */
+        childThread->setUserRegisters(2,0);
 	}else{
         printf("Unexpected user mode exception %d %d\n", which, type);
         ASSERT(FALSE);
