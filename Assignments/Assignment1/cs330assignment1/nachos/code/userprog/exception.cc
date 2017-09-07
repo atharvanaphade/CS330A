@@ -283,34 +283,35 @@ ExceptionHandler(ExceptionType which)
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
         machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
-    // else if((which == SyscallException) && (type == SysCall_Fork)){
+    else if((which == SyscallException) && (type == SysCall_Fork)){
 	// 	// child naming still left!
-	// 	NachOSThread* childThread = new NachOSThread("child");
+		NachOSThread* childThread = new NachOSThread("child");
+		//
+		// The below code works only for calling main initially
+		// I guess we must write our own constructer for the child
+		// OpenFile *childExecutable = fileSystem->Open(currentThread->exe);
+		// childThread->space = new ProcessAddressSpace(childExecutable);	
+		//
+		childThread->space= new ProcessAddressSpace(currentThread->space->getNumVirtualPages(),currentThread->space->ProcessStartPage);
+		//set up the page table
+		// copy the contents of the parent space
 
-	// 	//
-	// 	// The below code works only for calling main initially
-	// 	// I guess we must write our own constructer for the child
-	// 	// OpenFile *childExecutable = fileSystem->Open(currentThread->exe);
-	// 	// childThread->space = new ProcessAddressSpace(childExecutable);	
-	// 	//
-	// 	childThread->space= new ProcessAddressSpace(currentThread->space.getNumVirtualPages,currentThread->space.ProcessStartPage);
-	// 	//set up the page table
-	// 	// copy the contents of the parent space
-
-	// 	// Doubt: SaveUserState() and setting return register to be done after
-	// 	//        incrementing PC or before?
-	// 	childThread->SaveUserState(); 
-	// 	//childThread->userRegisters[2]=0; /* Not Working */
-	// 	childThread->setUserRegisters(2,0);
-
-	// 	//  CreateThreadStack()
-	// 	// func that does -  threads needed to be destroyed are destroyed, and the registers and the address space of the scheduled thread are restored
-	// 	// func also - call run 
-	// 	// place child pid in return 
-    //     // Advance program counters.
-    //     machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
-    //     machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
-    // }
+                  
+		//  CreateThreadStack()
+		// func that does -  threads needed to be destroyed are destroyed, and the registers and the address space of the scheduled thread are restored
+		// func also - call run 
+                childThread->ThreadFork(func,0);
+		// place child pid in return 
+         machine->WriteRegister(2,childThread->getPID());
+        // Advance program counters.
+        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+		// Doubt: SaveUserState() and setting return register to be done after
+		//        incrementing PC or before?
+        childThread->SaveUserState(); 
+                //childThread->userRegisters[2]=0; /* Not Working */
+        childThread->setUserRegisters(2,0);
+    }
     else{
         printf("Unexpected user mode exception %d %d\n", which, type);
         ASSERT(FALSE);

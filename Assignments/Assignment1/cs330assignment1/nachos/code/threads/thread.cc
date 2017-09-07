@@ -95,7 +95,20 @@ NachOSThread::~NachOSThread()
 //	"func" is the procedure to run concurrently.
 //	"arg" is a single argument to be passed to the procedure.
 //----------------------------------------------------------------------
-
+void func(int arg)
+{
+    //Destroy threads that need to be destroyed
+    if (threadToBeDestroyed != NULL) {
+        delete threadToBeDestroyed;
+	threadToBeDestroyed = NULL;
+    }
+    //restore current threads address space
+    if (currentThread->space != NULL) {		// if there is an address space
+        currentThread->RestoreUserState();     // to restore, do it.
+	currentThread->space->RestoreContextOnSwitch();
+    }
+    machine->Run();
+}
 void
 NachOSThread::ThreadFork(VoidFunctionPtr func, int arg)
 {
