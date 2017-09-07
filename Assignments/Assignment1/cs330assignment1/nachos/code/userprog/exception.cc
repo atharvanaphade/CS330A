@@ -300,9 +300,9 @@ ExceptionHandler(ExceptionType which)
 		//  CreateThreadStack()
 		// func that does -  threads needed to be destroyed are destroyed, and the registers and the address space of the scheduled thread are restored
 		// func also - call run 
-                childThread->ThreadFork(func,0);
+        childThread->ThreadFork(func,0);
 		// place child pid in return 
-         machine->WriteRegister(2,childThread->getPID());
+        machine->WriteRegister(2,childThread->getPID());
         // Advance program counters.
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
