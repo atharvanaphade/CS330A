@@ -273,12 +273,21 @@ ExceptionHandler(ExceptionType which)
 	// One case to be handled: when a child thread terminates, we must send a signal to
 	// the parent thread in case it called wait(NULL) in the program waiting for the child
 	// to terminate.
-	if(NachOSThread::NumOfThreads == 1){
-	    interrupt->Halt();
-    }
-    else{
-       	    currentThread->FinishThread();
-      	} 
+        int curPid = currentThread->getPID();
+        NachOSThread* parThread=currentThread->parentThread();
+        // If parent is waiting for this particular child
+        if(parThread->joinpid == curPid){
+           IntStatus oldLevel = interrupt->SetLevel(IntOff);
+           scheduler->MoveThreadToReadyQueue(parThread); // MoveThreadToReadyQueue assumes that interrupts are disabled!
+           (void) interrupt->SetLevel(oldLevel);
+        }
+        if(NachOSThread::NumOfThreads == 1){
+           interrupt->Halt();
+        }
+        else{
+             currentThread->FinishThread();
+        }
+        parThread->SetExitCode(curPid, machine->ReadRegister(2));
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
         machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
@@ -286,6 +295,9 @@ ExceptionHandler(ExceptionType which)
     else if((which == SyscallException) && (type == SysCall_Fork)){
 	// 	// child naming still left!
 		NachOSThread* childThread = new NachOSThread("child");
+                // updating parent thread
+                childThread->parentThread=currentThread;
+                currentThread->SetChild(childThread->getPID());
 		//
 		// The below code works only for calling main initially
 		// I guess we must write our own constructer for the child
@@ -296,7 +308,6 @@ ExceptionHandler(ExceptionType which)
 		//set up the page table
 		// copy the contents of the parent space
 
-                  
 		//  CreateThreadStack()
 		// func that does -  threads needed to be destroyed are destroyed, and the registers and the address space of the scheduled thread are restored
 		// func also - call run 
@@ -306,6 +317,7 @@ ExceptionHandler(ExceptionType which)
         // Advance program counters.
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
 		// Doubt: SaveUserState() and setting return register to be done after
 		//        incrementing PC or before?
         childThread->SaveUserState(); 

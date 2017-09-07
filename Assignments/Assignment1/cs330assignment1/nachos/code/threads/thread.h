@@ -88,6 +88,7 @@ class NachOSThread {
     static int CurAvailablePage;
     static int NumOfThreads;
     static int CurMaxPage; // Index of maximum page currentely available.
+    NachOSThread* parentThread;
     // basic thread operations
     int NumInstr;
     int joinpid;
