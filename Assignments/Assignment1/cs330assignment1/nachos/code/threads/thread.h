@@ -84,6 +84,7 @@ class NachOSThread {
 					// NOTE -- thread being deleted
 					// must not be running when delete
 					// is called
+    static int CurAvailablePage;
     static int NumOfThreads;
     static int CurMaxPage; // Index of maximum page currentely available.
     // basic thread operations

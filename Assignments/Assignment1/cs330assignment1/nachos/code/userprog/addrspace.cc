@@ -87,7 +87,7 @@ ProcessAddressSpace::ProcessAddressSpace(OpenFile *executable)
     KernelPageTable = new TranslationEntry[numVirtualPages];
     for (i = 0; i < numVirtualPages; i++) {
 	KernelPageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
-	KernelPageTable[i].physicalPage = i;
+	KernelPageTable[i].physicalPage = i+NachOSThread::CurAvailablePage;
 	KernelPageTable[i].valid = TRUE;
 	KernelPageTable[i].use = FALSE;
 	KernelPageTable[i].dirty = FALSE;
@@ -98,8 +98,10 @@ ProcessAddressSpace::ProcessAddressSpace(OpenFile *executable)
     
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
-    bzero(machine->mainMemory, size);
-
+// Offset appropriately
+    bzero(machine->mainMemory+(NachOSThread::CurAvailablePage)*PageSize, size);
+    //update the index of the current available page.
+   NachOSThread::CurAvailablePage+=numVirtualPages;
 // then, copy in the code and data segments into memory
     if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 

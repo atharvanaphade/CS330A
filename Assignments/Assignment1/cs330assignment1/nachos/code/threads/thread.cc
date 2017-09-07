@@ -34,6 +34,7 @@
 int PIDint = 0;
 int NachOSThread::NumOfThreads=0;
 int NachOSThread::CurMaxPage=0;
+int NachOSThread::CurAvailablePage=0;
 NachOSThread::NachOSThread(char* threadName)
 {
     NumOfThreads++;
