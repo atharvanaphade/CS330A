@@ -35,6 +35,11 @@ int PIDint = 0;
 NachOSThread::NachOSThread(char* threadName)
 {
     NumInstr = 0;
+    joinpid = -1;
+    for(int i=0;i<10;i++){
+        childpid = -1;
+        childexit = -1;
+    }
     PIDint = PIDint+1;
     pid = PIDint;
     if (pid==1)
@@ -104,6 +109,68 @@ NachOSThread::ThreadFork(VoidFunctionPtr func, int arg)
     scheduler->MoveThreadToReadyQueue(this);	// MoveThreadToReadyQueue assumes that interrupts
 					// are disabled!
     (void) interrupt->SetLevel(oldLevel);
+}
+
+//----------------------------------------------------------------------
+// NachOSThread::FindChild
+// return true if child of given pid exists else returns false
+// 	//----------------------------------------------------------------------
+
+bool
+NachOSThread::FindChild(int pid)
+{
+    for(int i=0; i<10; i++){
+        if(childpid[i]==pid)
+            return true;
+    }        
+    return false;
+}
+
+//----------------------------------------------------------------------
+// NachOSThread::GetExitCode
+// return exit code of child if process has exited else -1
+// 	//----------------------------------------------------------------------
+
+int
+NachOSThread::GetExitCode(int pid)
+{
+    for(int i=0; i<10; i++){
+        if(childpid[i]==pid)
+            childpid[i] = -1;
+            return childexit[i];
+    }        
+    return -1;
+}
+
+//----------------------------------------------------------------------
+// NachOSThread::SetExitCode
+// set exit code of child
+// 	//----------------------------------------------------------------------
+
+void
+NachOSThread::SetExitCode(int pid,int code)
+{
+    for(int i=0; i<10; i++){
+        if(childpid[i]==pid)
+            childexit[i] = code;
+            break;
+    }        
+}
+
+//----------------------------------------------------------------------
+// NachOSThread::SetChild
+// set pid of child in array
+// 	//----------------------------------------------------------------------
+
+void
+NachOSThread::SetChild(int pid)
+{
+    for(int i=0; i<10; i++){
+        if(childpid[i]==-1)
+            childpid[i] = pid;
+            childexit[i] = -1;
+            break;
+    }        
 }
 
 //----------------------------------------------------------------------

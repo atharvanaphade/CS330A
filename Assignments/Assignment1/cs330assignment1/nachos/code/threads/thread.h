@@ -56,7 +56,7 @@
 
 
 // Thread state
-enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED };
+enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED};
 
 // external function, dummy routine whose sole job is to call NachOSThread::Print
 extern void ThreadPrint(int arg);
@@ -87,6 +87,7 @@ class NachOSThread {
 
     // basic thread operations
     int NumInstr;
+    int joinpid;
     int getPID(){return pid;}
     int getPPID(){return ppid;}
     void ThreadFork(VoidFunctionPtr func, int arg); 	// Make thread run (*func)(arg)
@@ -101,10 +102,16 @@ class NachOSThread {
     void setStatus(ThreadStatus st) { status = st; }
     char* getName() { return (name); }
     void Print() { printf("%s, ", name); }
+    bool FindChild(int pid);
+    int GetExitCode(int pid);
+    void SetExitCode(int pid,int code);
+    void SetChild(int pid);
 
   private:
     // some of the private data for this class is listed above
 
+    int childpid[10];
+    int childexit[10];
     int* stack; 	 		// Bottom of the stack
 					// NULL if this is the main thread
 					// (If NULL, don't deallocate stack)
