@@ -311,6 +311,26 @@ ExceptionHandler(ExceptionType which)
         childThread->SaveUserState(); 
                 //childThread->userRegisters[2]=0; /* Not Working */
         childThread->setUserRegisters(2,0);
+    else if((which == SyscallException) && (type == SysCall_Join))
+    {
+        int pid = machine->ReadRegister(4);
+        if(!currentThread->FindChild(pid))
+            machine->WriteRegister(2,-1);
+        else{
+            int exitcode = currentThread->GetExitCode(pid);
+            if(exitcode!=-1)
+                machine->WriteRegister(2,exitcode);
+            else{
+                IntStatus temp = interrupt->SetLevel(IntOff);
+                currentThread->joinpid = pid;
+                currentThread->PutThreadToSleep();
+                (void) interrupt->SetLevel(temp);
+            }
+        }
+       
+        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
     else{
         printf("Unexpected user mode exception %d %d\n", which, type);
