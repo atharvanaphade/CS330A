@@ -61,7 +61,7 @@ ProcessAddressSpace::ProcessAddressSpace(OpenFile *executable)
 {
     NoffHeader noffH;
     unsigned int i, size;
-
+   ProcessStartPage = NachOSThread::CurAvailablePage;
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) && 
 		(WordToHost(noffH.noffMagic) == NOFFMAGIC))
@@ -73,10 +73,9 @@ ProcessAddressSpace::ProcessAddressSpace(OpenFile *executable)
 			+ UserStackSize;	// we need to increase the size
 						// to leave room for the stack
     numVirtualPages = divRoundUp(size, PageSize);
-    NachOSThread::CurMaxPage=numVirtualPages; // Updating the availabe page index
     size = numVirtualPages * PageSize;
 
-    ASSERT(numVirtualPages <= NumPhysPages);		// check we're not trying
+    ASSERT(numVirtualPages + NachOSThread::CurAvailablePage <= NumPhysPages);		// check we're not trying
 						// to run anything too big --
 						// at least until we have
 						// virtual memory
@@ -101,7 +100,7 @@ ProcessAddressSpace::ProcessAddressSpace(OpenFile *executable)
 // Offset appropriately
     bzero(machine->mainMemory+(NachOSThread::CurAvailablePage)*PageSize, size);
     //update the index of the current available page.
-   NachOSThread::CurAvailablePage+=numVirtualPages;
+    NachOSThread::CurAvailablePage+=numVirtualPages;
 // then, copy in the code and data segments into memory
     if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
@@ -117,7 +116,30 @@ ProcessAddressSpace::ProcessAddressSpace(OpenFile *executable)
     }
 
 }
-
+ProcessAddressSpace::ProcessAddressSpace(unsigned int numVirtPagesToBeSet,unsigned int parentStartPage)
+{
+   unsigned int i,size;
+   numVirtualPages = numVirtPagesToBeSet;
+   ProcessStartPage = NachOSThread::CurAvailablePage;
+   ASSERT(numVirtualPages + NachOSThread::CurAvailablePage <= NumPhysPages);		// check we're not trying
+   KernelPageTable = new TranslationEntry[numVirtualPages];
+   for (i = 0; i < numVirtualPages; i++) {
+      KernelPageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
+      KernelPageTable[i].physicalPage = i+NachOSThread::CurAvailablePage;
+      KernelPageTable[i].valid = TRUE;
+      KernelPageTable[i].use = FALSE;
+      KernelPageTable[i].dirty = FALSE;
+      KernelPageTable[i].readOnly = FALSE;  // if the code segment was entirely on 
+      // a separate page, we could set its 
+      // pages to be read-only
+   }
+   bzero(machine->mainMemory+(NachOSThread::CurAvailablePage)*PageSize, size);
+   for(i = 0;i < numVirtualPages*PageSize; i++)
+   {
+      machine->mainMemory[i+(NachOSThread::CurAvailablePage*PageSize)] = machine->mainMemory[i+parentStartPage*PageSize];
+   }
+   NachOSThread::CurAvailablePage+=numVirtualPages;
+}
 //----------------------------------------------------------------------
 // ProcessAddressSpace::~ProcessAddressSpace
 // 	Dealloate an address space.  Nothing for now!

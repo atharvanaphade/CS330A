@@ -23,6 +23,13 @@ class ProcessAddressSpace {
     ProcessAddressSpace(OpenFile *executable);	// Create an address space,
 					// initializing it with the program
 					// stored in the file "executable"
+    ProcessAddressSpace(unsigned int,unsigned int);	// Custom constructor to create a child address space
+
+    unsigned int ProcessStartPage;
+    unsigned int getNumVirtualPages()
+    {
+      return numVirtualPages;
+    }
     ~ProcessAddressSpace();			// De-allocate an address space
 
     void InitUserModeCPURegisters();		// Initialize user-level CPU registers,

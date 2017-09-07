@@ -263,8 +263,7 @@ ExceptionHandler(ExceptionType which)
 		// OpenFile *childExecutable = fileSystem->Open(currentThread->exe);
 		// childThread->space = new ProcessAddressSpace(childExecutable);	
 		//
-		
-		
+		childThread->space= new ProcessAddressSpace(currentThread->space.getNumVirtualPages,currentThread->space.ProcessStartPage);
 		//set up the page table
 		// copy the contents of the parent space
 
