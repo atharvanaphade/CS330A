@@ -41,11 +41,12 @@ NachOSThread::NachOSThread(char* threadName)
     NumInstr = 0;
     joinpid = -1;
     for(int i=0;i<10;i++){
-        childpid = -1;
-        childexit = -1;
+        childpid[i] = -1;
+        childexit[i] = -1;
     }
     PIDint = PIDint+1;
     pid = PIDint;
+    parentThread = NULL;
     if (pid==1)
         ppid = 0;
     else

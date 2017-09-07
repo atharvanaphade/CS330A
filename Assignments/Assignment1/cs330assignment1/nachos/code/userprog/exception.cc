@@ -274,9 +274,9 @@ ExceptionHandler(ExceptionType which)
 	// the parent thread in case it called wait(NULL) in the program waiting for the child
 	// to terminate.
         int curPid = currentThread->getPID();
-        NachOSThread* parThread=currentThread->parentThread();
+        NachOSThread* parThread=currentThread->parentThread;
         // If parent is waiting for this particular child
-        if(parThread->joinpid == curPid){
+        if(parThread != NULL  && parThread->joinpid == curPid){
            IntStatus oldLevel = interrupt->SetLevel(IntOff);
            scheduler->MoveThreadToReadyQueue(parThread); // MoveThreadToReadyQueue assumes that interrupts are disabled!
            (void) interrupt->SetLevel(oldLevel);
@@ -287,7 +287,7 @@ ExceptionHandler(ExceptionType which)
         else{
              currentThread->FinishThread();
         }
-        parThread->SetExitCode(curPid, machine->ReadRegister(2));
+        parThread->SetExitCode(curPid, machine->ReadRegister(4));
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
         machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
@@ -323,6 +323,7 @@ ExceptionHandler(ExceptionType which)
         childThread->SaveUserState(); 
                 //childThread->userRegisters[2]=0; /* Not Working */
         childThread->setUserRegisters(2,0);
+    }
     else if((which == SyscallException) && (type == SysCall_Join))
     {
         int pid = machine->ReadRegister(4);

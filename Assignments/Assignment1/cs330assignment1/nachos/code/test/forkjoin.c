@@ -31,6 +31,7 @@ main()
        syscall_wrapper_PrintString(" instructions.\n");
     }
     else {
+        syscall_wrapper_Sleep(1000);
        syscall_wrapper_PrintString("Parent after fork waiting for child: ");
        syscall_wrapper_PrintInt(x);
        syscall_wrapper_PrintChar('\n');
