@@ -228,7 +228,7 @@ ExceptionHandler(ExceptionType which)
     else if ((which == SyscallException) && (type == SysCall_Exec)) {
         vaddr = machine->ReadRegister(4);
         machine->ReadMem(vaddr, 1, &memval);
-        char file_path[100];
+        char file_path[1000];
         int i=0;
         while ((*(char*)&memval) != '\0') {
             file_path[i] = *(char*)&memval;
