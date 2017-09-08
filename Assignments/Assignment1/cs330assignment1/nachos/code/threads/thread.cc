@@ -40,7 +40,7 @@ NachOSThread::NachOSThread(char* threadName)
     NumOfThreads++;
     NumInstr = 0;
     joinpid = -1;
-    for(int i=0;i<10;i++){
+    for(int i=0;i<maxChild;i++){
         childpid[i] = -1;
         childexit[i] = -1;
     }
@@ -137,7 +137,7 @@ NachOSThread::ThreadFork(VoidFunctionPtr func, int arg)
 bool
 NachOSThread::FindChild(int pid)
 {
-    for(int i=0; i<10; i++){
+    for(int i=0; i<maxChild; i++){
         if(childpid[i]==pid)
             return true;
     }        
@@ -152,7 +152,7 @@ NachOSThread::FindChild(int pid)
 int
 NachOSThread::GetExitCode(int pid)
 {
-    for(int i=0; i<10; i++){
+    for(int i=0; i<maxChild; i++){
         if(childpid[i]==pid)
             childpid[i] = -1;
             return childexit[i];
@@ -168,7 +168,7 @@ NachOSThread::GetExitCode(int pid)
 void
 NachOSThread::SetExitCode(int pid,int code)
 {
-    for(int i=0; i<10; i++){
+    for(int i=0; i<maxChild; i++){
         if(childpid[i]==pid)
             childexit[i] = code;
             break;
@@ -183,7 +183,7 @@ NachOSThread::SetExitCode(int pid,int code)
 void
 NachOSThread::SetChild(int pid)
 {
-    for(int i=0; i<10; i++){
+    for(int i=0; i<maxChild; i++){
         if(childpid[i]==-1)
             childpid[i] = pid;
             childexit[i] = -1;
