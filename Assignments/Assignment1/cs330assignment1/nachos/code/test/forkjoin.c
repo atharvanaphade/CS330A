@@ -11,6 +11,7 @@ main()
     syscall_wrapper_PrintChar('\n');
     x = syscall_wrapper_Fork();
     if (x == 0) {
+       syscall_wrapper_Sleep(10000);
        syscall_wrapper_PrintString("Child PID: ");
        syscall_wrapper_PrintInt(syscall_wrapper_GetPID());
        syscall_wrapper_PrintChar('\n');
@@ -31,7 +32,6 @@ main()
        syscall_wrapper_PrintString(" instructions.\n");
     }
     else {
-        syscall_wrapper_Sleep(1000);
        syscall_wrapper_PrintString("Parent after fork waiting for child: ");
        syscall_wrapper_PrintInt(x);
        syscall_wrapper_PrintChar('\n');

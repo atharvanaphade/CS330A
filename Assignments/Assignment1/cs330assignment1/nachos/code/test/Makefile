@@ -37,7 +37,7 @@ CPP = /usr/bin/cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt shell matmult sort printtest vectorsum testregPA forkjoin testexec testyield
+all: halt shell matmult sort printtest vectorsum testregPA forkjoin testexec testyield testAssignment1
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -128,5 +128,13 @@ testyield: testyield.o start.o
 	$(LD) $(LDFLAGS) start.o testyield.o -o testyield.coff
 	../bin/coff2noff testyield.coff testyield
 
+testAssignment1.o: testAssignment1.c
+	$(CC) $(INCDIR) -S testAssignment1.c -o testAssignment1.s
+	$(AS) $(CFLAGS) testAssignment1.s -o testAssignment1.o
+	rm -f testAssignment1.s
+testAssignment1: testAssignment1.o start.o
+	$(LD) $(LDFLAGS) start.o testAssignment1.o -o testAssignment1.coff
+	../bin/coff2noff testAssignment1.coff testAssignment1
+
 clean:
-	rm -f start.o halt.o halt shell.o shell sort.o sort matmult.o matmult halt.coff shell.coff sort.coff matmult.coff printtest.o printtest printtest.coff vectorsum.o vectorsum.coff vectorsum testregPA.o testregPA.coff testregPA forkjoin.o forkjoin.coff forkjoin testexec.o testexec.coff testexec testyield.o testyield.coff testyield
+	rm -f start.o halt.o halt shell.o shell sort.o sort matmult.o matmult halt.coff shell.coff sort.coff matmult.coff printtest.o printtest printtest.coff vectorsum.o vectorsum.coff vectorsum testregPA.o testregPA.coff testregPA forkjoin.o forkjoin.coff forkjoin testexec.o testexec.coff testexec testyield.o testyield.coff testyield testAssignment1.o testAssignment1.coff testAssignment1
