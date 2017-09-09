@@ -276,10 +276,14 @@ ExceptionHandler(ExceptionType which)
         int curPid = currentThread->getPID();
         NachOSThread* parThread=currentThread->parentThread;
         // If parent is waiting for this particular child
-        if(parThread != NULL  && parThread->joinpid == curPid){
-           IntStatus oldLevel = interrupt->SetLevel(IntOff);
-           scheduler->MoveThreadToReadyQueue(parThread); // MoveThreadToReadyQueue assumes that interrupts are disabled!
-           (void) interrupt->SetLevel(oldLevel);
+        if(parThread != NULL ){
+            if(parThread->joinpid == curPid){
+                IntStatus oldLevel = interrupt->SetLevel(IntOff);
+                scheduler->MoveThreadToReadyQueue(parThread); // MoveThreadToReadyQueue assumes that interrupts are disabled!
+                (void) interrupt->SetLevel(oldLevel);
+            }
+            parThread->SetExitCode(curPid, machine->ReadRegister(4));
+            DEBUG('t',"setting exit code of thread \"%d\" with \" %d\" \n",curPid,machine->ReadRegister(4));
         }
         if(NachOSThread::NumOfThreads == 1){
            interrupt->Halt();
@@ -287,17 +291,13 @@ ExceptionHandler(ExceptionType which)
         else{
              currentThread->FinishThread();
         }
-        parThread->SetExitCode(curPid, machine->ReadRegister(4));
-        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
-        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
-        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
     else if((which == SyscallException) && (type == SysCall_Fork)){
-	// 	// child naming still left!
+	    //child naming still left!
 		NachOSThread* childThread = new NachOSThread("child");
-                // updating parent thread
-                childThread->parentThread=currentThread;
-                currentThread->SetChild(childThread->getPID());
+        // updating parent thread
+        childThread->parentThread=currentThread;
+        currentThread->SetChild(childThread->getPID());
 		//
 		// The below code works only for calling main initially
 		// I guess we must write our own constructer for the child
@@ -327,12 +327,16 @@ ExceptionHandler(ExceptionType which)
     else if((which == SyscallException) && (type == SysCall_Join))
     {
         int pid = machine->ReadRegister(4);
-        if(!currentThread->FindChild(pid))
+        if(!currentThread->FindChild(pid)){
             machine->WriteRegister(2,-1);
+            DEBUG('t', "Thread with pid \"%d\" is not child of the thread \"%d\" \n", pid, currentThread->getPID());
+        }
         else{
             int exitcode = currentThread->GetExitCode(pid);
-            if(exitcode!=-1)
+            DEBUG('t', "Exitcode of child \"%d\" is \"%d\" \n",pid,exitcode);
+            if(exitcode!=-1){
                 machine->WriteRegister(2,exitcode);
+            }
             else{
                 IntStatus temp = interrupt->SetLevel(IntOff);
                 currentThread->joinpid = pid;
