@@ -183,7 +183,7 @@ NachOSThread::SetExitCode(int pid,int code)
 void
 NachOSThread::SetChild(int pid)
 {
-    for(int i=0; i<maxChild; i++){
+    for(int i=0; i<maxChild+1; i++){
         if(childpid[i]==-1)
             childpid[i] = pid;
             childexit[i] = -1;
