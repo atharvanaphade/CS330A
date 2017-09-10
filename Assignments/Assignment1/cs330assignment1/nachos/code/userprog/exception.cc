@@ -298,12 +298,8 @@ ExceptionHandler(ExceptionType which)
         // updating parent thread
         childThread->parentThread=currentThread;
         currentThread->SetChild(childThread->getPID());
-		//
-		// The below code works only for calling main initially
-		// I guess we must write our own constructer for the child
-		// OpenFile *childExecutable = fileSystem->Open(currentThread->exe);
-		// childThread->space = new ProcessAddressSpace(childExecutable);	
-		//
+		//	
+		//make a new address space entry 
 		childThread->space= new ProcessAddressSpace(currentThread->space->getNumVirtualPages(),currentThread->space->ProcessStartPage);
 		//set up the page table
 		// copy the contents of the parent space
@@ -312,16 +308,15 @@ ExceptionHandler(ExceptionType which)
 		// func that does -  threads needed to be destroyed are destroyed, and the registers and the address space of the scheduled thread are restored
 		// func also - call run 
         childThread->ThreadFork(func,0);
-		// place child pid in return 
+		// place child pid in return of parent
         machine->WriteRegister(2,childThread->getPID());
         // Advance program counters.
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
         machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
-		// Doubt: SaveUserState() and setting return register to be done after
-		//        incrementing PC or before?
+        //save all registers for child
         childThread->SaveUserState(); 
-                //childThread->userRegisters[2]=0; /* Not Working */
+        //set return value zero for child
         childThread->setUserRegisters(2,0);
     }
     else if((which == SyscallException) && (type == SysCall_Join))
