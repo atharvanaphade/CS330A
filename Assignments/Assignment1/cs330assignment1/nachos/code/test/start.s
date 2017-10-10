@@ -155,7 +155,7 @@ syscall_wrapper_PrintString:
 	.end syscall_wrapper_PrintString
 
 	.globl syscall_wrapper_GetReg
-	.ent    system_callGetReg
+	.ent    syscall_wrapper_GetReg
 syscall_wrapper_GetReg:
 	addiu $2,$0,SysCall_GetReg
 	syscall

@@ -11,7 +11,6 @@ main()
     syscall_wrapper_PrintChar('\n');
     x = syscall_wrapper_Fork();
     if (x == 0) {
-       syscall_wrapper_Sleep(10000);
        syscall_wrapper_PrintString("Child PID: ");
        syscall_wrapper_PrintInt(syscall_wrapper_GetPID());
        syscall_wrapper_PrintChar('\n');

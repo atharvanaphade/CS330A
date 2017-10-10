@@ -1,0 +1,5 @@
+Present : 104
+Mean    :  3.06/10
+Median  :  2.50/10
+Max     : 10.0/10
+Min     :  0.0/10
