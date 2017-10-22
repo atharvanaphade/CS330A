@@ -22,6 +22,7 @@
 #include "scheduler.h"
 #include "system.h"
 
+extern int schedulingAlgorithm;
 //----------------------------------------------------------------------
 // ProcessScheduler::ProcessScheduler
 // 	Initialize the list of ready but not running threads to empty.
@@ -56,9 +57,12 @@ ProcessScheduler::MoveThreadToReadyQueue (NachOSThread *thread)
     DEBUG('t', "Putting thread %s with PID %d on ready list.\n", thread->getName(), thread->GetPID());
 
     thread->setStatus(READY);
-    listOfReadyThreads->Append((void *)thread);
+   if(schedulingAlgorithm == 2)
     //FOR SDF
-    // listOfReadyThreads->SortedInsert((void *)thread, thread->estimate_burst);
+     listOfReadyThreads->SortedInsert((void *)thread, thread->estimate_burst);
+   else
+        listOfReadyThreads->Append((void *)thread);
+ 
 }
 
 //----------------------------------------------------------------------
@@ -72,9 +76,11 @@ ProcessScheduler::MoveThreadToReadyQueue (NachOSThread *thread)
 NachOSThread *
 ProcessScheduler::SelectNextReadyThread ()
 {
-    return (NachOSThread *)listOfReadyThreads->Remove();
     //FOR SDF
-    // return (NachOSThread *)listOfReadyThreads->SortedRemove(NULL);
+    if(schedulingAlgorithm == 2)
+        return (NachOSThread *)listOfReadyThreads->SortedRemove(NULL);
+    else
+        return (NachOSThread *)listOfReadyThreads->Remove();
 }
 
 //----------------------------------------------------------------------

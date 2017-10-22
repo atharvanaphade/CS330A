@@ -74,7 +74,7 @@ extern void ForkStartFunction (int dummy);
 //	"argv" is an array of strings, one for each command line argument
 //		ex: "nachos -d +" -> argv = {"nachos", "-d", "+"}
 //----------------------------------------------------------------------
-
+int schedulingAlgorithm = 1;
 int
 main(int argc, char **argv)
 {
@@ -114,6 +114,8 @@ main(int argc, char **argv)
 			char istr[100];
 			FILE * fp = fopen(*(argv+1), "r");
 			ASSERT(fp!=NULL);
+			fgets(istr,100,fp);
+			schedulingAlgorithm = (int)(istr[0]-'0');
 			while(fgets(istr, 100, fp)!=NULL) {
 				char* token = strtok(istr,"\n ");
 				char exec_com[100];
