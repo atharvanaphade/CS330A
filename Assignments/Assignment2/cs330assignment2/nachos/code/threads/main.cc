@@ -115,15 +115,19 @@ main(int argc, char **argv)
 			FILE * fp = fopen(*(argv+1), "r");
 			ASSERT(fp!=NULL);
 			while(fgets(istr, 100, fp)!=NULL) {
-				char* token = strtok(istr," ");
+				char* token = strtok(istr,"\n ");
 				char exec_com[100];
 				char pri_val[100];
-				*exec_com = strdup(token);
-				token = strtok(0," ");
+				strcpy(exec_com,token);
+				// printf("   ");
+				// printf(exec_com);
+				// printf("---");
+				token = strtok(0,"\n ");
 				if(token)
-					*pri_val = strdup(token);
+					strcpy(pri_val,token);
 				else
-					*pri_val = strdup("100");
+					strcpy(pri_val,"100");
+				// printf(pri_val);
 			}
 			fclose(fp);
 		} 
