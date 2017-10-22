@@ -46,6 +46,7 @@ NachOSThread::NachOSThread(char* threadName)
 #endif
 
     threadArray[thread_index] = this;
+    priority = 100;
     pid = thread_index;
     thread_index++;
     ASSERT(thread_index < MAX_THREAD_COUNT);

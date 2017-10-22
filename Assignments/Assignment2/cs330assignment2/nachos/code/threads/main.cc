@@ -60,7 +60,7 @@ extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
 extern void Print(char *file), PerformanceTest(void);
 extern void LaunchUserProcess(char *file), ConsoleTest(char *in, char *out);
 extern void MailTest(int networkID);
-
+extern void ForkStartFunction (int dummy);
 //----------------------------------------------------------------------
 // main
 // 	Bootstrap the operating system kernel.  
@@ -128,8 +128,23 @@ main(int argc, char **argv)
 				else
 					strcpy(pri_val,"100");
 				// printf(pri_val);
+				OpenFile *executable = fileSystem->Open(exec_com);
+				ProcessAddressSpace *space;
+			
+				ASSERT(executable!=NULL);
+				space = new ProcessAddressSpace(executable);
+				space->InitUserModeCPURegisters();
+				space->RestoreContextOnSwitch();
+				NachOSThread * exec_thread = new NachOSThread("Executable");
+				exec_thread->space = space;
+				exec_thread->CreateThreadStack(ForkStartFunction, 0);
+				exec_thread->SaveUserState();
+				exec_thread->priority = atoi(pri_val);
+				exec_thread->Schedule();
 			}
 			fclose(fp);
+			exitThreadArray[currentThread->GetPID()] = true;
+			currentThread->Exit(FALSE, 0);
 		} 
 #endif // USER_PROGRAM
 #ifdef FILESYS
