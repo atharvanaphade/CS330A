@@ -35,7 +35,8 @@
 NachOSThread::NachOSThread(char* threadName)
 {
     int i;
-
+    burst_start = 0;
+    estimate_burst = 0;
     name = threadName;
     stackTop = NULL;
     stack = NULL;
@@ -562,4 +563,15 @@ unsigned
 NachOSThread::GetInstructionCount (void)
 {
    return instructionCount;
+}
+
+//----------------------------------------------------------------------
+// NachOSThread::GetInstructionCount
+//      Called by SysCall_NumInstr
+//----------------------------------------------------------------------
+
+void
+NachOSThread::updateBurstEstimate (int time)
+{
+   estimate_burst = (estimate_burst+time)/2;
 }

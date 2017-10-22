@@ -84,6 +84,8 @@ class NachOSThread {
 
   public:
     int priority;
+    int burst_start;
+    int estimate_burst;
     NachOSThread(char* debugName);		// initialize a Thread 
     ~NachOSThread(); 				// deallocate a Thread
 					// NOTE -- thread being deleted
@@ -135,7 +137,7 @@ class NachOSThread {
 
     void IncInstructionCount();
     unsigned GetInstructionCount();
-
+    void updateBurstEstimate(int time);
   private:
     // some of the private data for this class is listed above
     int* stack; 	 		// Bottom of the stack 

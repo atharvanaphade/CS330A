@@ -57,6 +57,8 @@ ProcessScheduler::MoveThreadToReadyQueue (NachOSThread *thread)
 
     thread->setStatus(READY);
     listOfReadyThreads->Append((void *)thread);
+    //FOR SDF
+    // listOfReadyThreads->SortedInsert((void *)thread, thread->estimate_burst);
 }
 
 //----------------------------------------------------------------------
@@ -71,6 +73,8 @@ NachOSThread *
 ProcessScheduler::SelectNextReadyThread ()
 {
     return (NachOSThread *)listOfReadyThreads->Remove();
+    //FOR SDF
+    // return (NachOSThread *)listOfReadyThreads->SortedRemove(NULL);
 }
 
 //----------------------------------------------------------------------
@@ -102,9 +106,10 @@ ProcessScheduler::ScheduleThread (NachOSThread *nextThread)
     oldThread->CheckOverflow();		    // check if the old thread
 					    // had an undetected stack overflow
 
+    oldThread->updateBurstEstimate(stats->totalTicks-oldThread->burst_start);
     currentThread = nextThread;		    // switch to the next thread
     currentThread->setStatus(RUNNING);      // nextThread is now running
-    
+    currentThread->burst_start = stats->totalTicks;
     DEBUG('t', "Switching from thread \"%s\" with pid %d to thread \"%s\" with pid %d\n",
 	  oldThread->getName(), oldThread->GetPID(), nextThread->getName(), nextThread->GetPID());
     
