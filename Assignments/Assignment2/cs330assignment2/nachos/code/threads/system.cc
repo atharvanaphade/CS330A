@@ -20,6 +20,8 @@ Timer *timer;				// the hardware timer device,
 					// for invoking context switches
 unsigned numPagesAllocated;              // number of physical frames allocated
 
+extern int schedulingAlgorithm;
+
 NachOSThread *threadArray[MAX_THREAD_COUNT];  // Array of thread pointers
 unsigned thread_index;                  // Index into this array (also used to assign unique pid)
 bool initializedConsoleSemaphores;
@@ -77,7 +79,9 @@ TimerInterruptHandler(int dummy)
            delete ptr;
         }
         //printf("[%d] Timer interrupt.\n", stats->totalTicks);
-        interrupt->YieldOnReturn();
+		if(schedulingAlgorithm > 2){	
+				interrupt->YieldOnReturn();
+		}
     }
 }
 

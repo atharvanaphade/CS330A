@@ -60,7 +60,7 @@ extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
 extern void Print(char *file), PerformanceTest(void);
 extern void LaunchUserProcess(char *file), ConsoleTest(char *in, char *out);
 extern void MailTest(int networkID);
-
+extern void ForkStartFunction (int dummy);
 //----------------------------------------------------------------------
 // main
 // 	Bootstrap the operating system kernel.  
@@ -74,7 +74,7 @@ extern void MailTest(int networkID);
 //	"argv" is an array of strings, one for each command line argument
 //		ex: "nachos -d +" -> argv = {"nachos", "-d", "+"}
 //----------------------------------------------------------------------
-
+int schedulingAlgorithm = 1;
 int
 main(int argc, char **argv)
 {
@@ -114,18 +114,39 @@ main(int argc, char **argv)
 			char istr[100];
 			FILE * fp = fopen(*(argv+1), "r");
 			ASSERT(fp!=NULL);
+			fgets(istr,100,fp);
+			schedulingAlgorithm = (int)(istr[0]-'0');
 			while(fgets(istr, 100, fp)!=NULL) {
-				char* token = strtok(istr," ");
+				char* token = strtok(istr,"\n ");
 				char exec_com[100];
 				char pri_val[100];
-				*exec_com = strdup(token);
-				token = strtok(0," ");
+				strcpy(exec_com,token);
+				// printf("   ");
+				// printf(exec_com);
+				// printf("---");
+				token = strtok(0,"\n ");
 				if(token)
-					*pri_val = strdup(token);
+					strcpy(pri_val,token);
 				else
-					*pri_val = strdup("100");
+					strcpy(pri_val,"100");
+				// printf(pri_val);
+				OpenFile *executable = fileSystem->Open(exec_com);
+				ProcessAddressSpace *space;
+			
+				ASSERT(executable!=NULL);
+				space = new ProcessAddressSpace(executable);
+				space->InitUserModeCPURegisters();
+				space->RestoreContextOnSwitch();
+				NachOSThread * exec_thread = new NachOSThread("Executable");
+				exec_thread->space = space;
+				exec_thread->CreateThreadStack(ForkStartFunction, 0);
+				exec_thread->SaveUserState();
+				exec_thread->priority = atoi(pri_val);
+				exec_thread->Schedule();
 			}
 			fclose(fp);
+			exitThreadArray[currentThread->GetPID()] = true;
+			currentThread->Exit(FALSE, 0);
 		} 
 #endif // USER_PROGRAM
 #ifdef FILESYS

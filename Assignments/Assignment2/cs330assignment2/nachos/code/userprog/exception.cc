@@ -184,7 +184,7 @@ ExceptionHandler(ExceptionType which)
        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
     else if ((which == SyscallException) && (type == SysCall_PrintInt)) {
-       printval = machine->ReadRegister(4);
+        printval = machine->ReadRegister(4);
        if (printval == 0) {
 	  writeDone->P() ;
           console->PutChar('0');
