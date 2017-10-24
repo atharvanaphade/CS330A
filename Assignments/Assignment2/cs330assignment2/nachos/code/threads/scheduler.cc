@@ -112,7 +112,8 @@ ProcessScheduler::ScheduleThread (NachOSThread *nextThread)
     oldThread->CheckOverflow();		    // check if the old thread
 					    // had an undetected stack overflow
 
-    oldThread->updateBurstEstimate(stats->totalTicks-oldThread->burst_start);
+    // Burst Estimate not to be updated here!
+    //oldThread->updateBurstEstimate(stats->totalTicks-oldThread->burst_start);
     currentThread = nextThread;		    // switch to the next thread
     currentThread->setStatus(RUNNING);      // nextThread is now running
     currentThread->burst_start = stats->totalTicks;

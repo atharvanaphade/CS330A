@@ -79,9 +79,10 @@ TimerInterruptHandler(int dummy)
            delete ptr;
         }
         //printf("[%d] Timer interrupt.\n", stats->totalTicks);
-		if(schedulingAlgorithm > 2){	
-				interrupt->YieldOnReturn();
-		}
+	if(schedulingAlgorithm > 2){
+	    currentThread->updateBurstEstimate(stats->totalTicks-currentThread->burst_start);
+	    interrupt->YieldOnReturn();
+	}
     }
 }
 

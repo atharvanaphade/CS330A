@@ -115,6 +115,7 @@ ExceptionHandler(ExceptionType which)
        for (i=0; i<thread_index; i++) {
           if (!exitThreadArray[i]) break;
        }
+       currentThread->updateBurstEstimate(stats->totalTicks-currentThread->burst_start);
        currentThread->Exit(i==thread_index, exitcode);
     }
     else if ((which == SyscallException) && (type == SysCall_Exec)) {
