@@ -50,9 +50,9 @@ Statistics::Print()
     avgCPUBurstLength=(totalCPUBurstTime)/numCPUBursts;
     // Computing CPU Utilization
     cpuUtilization=(totalCPUBurstTime)/totalTicks;
-    printf("Total CPU busy time: %d",totalCPUBurstTime);
-    printf("Total Execution Time: %d",totalTicks);
-    printf("CPU Utilization: %d",cpuUtilization);
-    printf("Average CPU burst length: %d",avgCPUBurstLength);
-    printf("Number of non-zero CPU bursts observed: %d",numCPUBursts);
+    printf("Total CPU busy time: %d\n",totalCPUBurstTime);
+    printf("Total Execution Time: %d\n",totalTicks);
+    printf("CPU Utilization: %d\n",cpuUtilization);
+    printf("Average CPU burst length: %d\n",avgCPUBurstLength);
+    printf("Number of non-zero CPU bursts observed: %d\n",numCPUBursts);
 }
