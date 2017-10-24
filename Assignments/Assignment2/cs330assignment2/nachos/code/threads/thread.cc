@@ -276,6 +276,9 @@ NachOSThread::YieldCPU ()
     if (nextThread != NULL) {
 	scheduler->MoveThreadToReadyQueue(this);
 	scheduler->ScheduleThread(nextThread);
+    }else{
+	// update cpu burst start time
+	currentThread->burst_start=stats->totalTicks;
     }
     (void) interrupt->SetLevel(oldLevel);
 }
