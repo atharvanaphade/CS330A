@@ -575,5 +575,6 @@ NachOSThread::GetInstructionCount (void)
 void
 NachOSThread::updateBurstEstimate (int time)
 {
+   if(time == 0)return;
    estimate_burst = (estimate_burst+time)/2;
 }
