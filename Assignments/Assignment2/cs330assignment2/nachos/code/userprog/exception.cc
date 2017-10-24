@@ -115,6 +115,12 @@ ExceptionHandler(ExceptionType which)
        for (i=0; i<thread_index; i++) {
           if (!exitThreadArray[i]) break;
        }
+       // non-zero CPU bursts
+       if(stats->totalTicks != currentThread->burst_start){
+          stats->numCPUBursts++;
+          stats->totalCPUBurstTime+=(stats->totalTicks-currentThread->burst_start);
+       }
+       currentThread->updateBurstEstimate(stats->totalTicks-currentThread->burst_start);
        currentThread->Exit(i==thread_index, exitcode);
     }
     else if ((which == SyscallException) && (type == SysCall_Exec)) {
@@ -184,7 +190,7 @@ ExceptionHandler(ExceptionType which)
        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
     else if ((which == SyscallException) && (type == SysCall_PrintInt)) {
-       printval = machine->ReadRegister(4);
+        printval = machine->ReadRegister(4);
        if (printval == 0) {
 	  writeDone->P() ;
           console->PutChar('0');

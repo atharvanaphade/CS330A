@@ -35,7 +35,8 @@
 NachOSThread::NachOSThread(char* threadName)
 {
     int i;
-
+    burst_start = 0;
+    estimate_burst = 0;
     name = threadName;
     stackTop = NULL;
     stack = NULL;
@@ -46,6 +47,7 @@ NachOSThread::NachOSThread(char* threadName)
 #endif
 
     threadArray[thread_index] = this;
+    priority = 100;
     pid = thread_index;
     thread_index++;
     ASSERT(thread_index < MAX_THREAD_COUNT);
@@ -300,17 +302,24 @@ NachOSThread::YieldCPU ()
 void
 NachOSThread::PutThreadToSleep ()
 {
+
     NachOSThread *nextThread;
-    
+
     ASSERT(this == currentThread);
     ASSERT(interrupt->getLevel() == IntOff);
-    
+    // non-zero CPU bursts
+    if(stats->totalTicks != currentThread->burst_start){
+       stats->numCPUBursts++;
+       stats->totalCPUBurstTime+=(stats->totalTicks-currentThread->burst_start);
+    }
+    currentThread->updateBurstEstimate(stats->totalTicks-currentThread->burst_start);
+
     DEBUG('t', "Sleeping thread \"%s\" with pid %d\n", getName(), pid);
 
     status = BLOCKED;
     while ((nextThread = scheduler->SelectNextReadyThread()) == NULL)
 	interrupt->Idle();	// no one to run, wait for an interrupt
-        
+
     scheduler->ScheduleThread(nextThread); // returns when we've been signalled
 }
 
@@ -561,4 +570,16 @@ unsigned
 NachOSThread::GetInstructionCount (void)
 {
    return instructionCount;
+}
+
+//----------------------------------------------------------------------
+// NachOSThread::GetInstructionCount
+//      Called by SysCall_NumInstr
+//----------------------------------------------------------------------
+
+void
+NachOSThread::updateBurstEstimate (int time)
+{
+   if(time == 0)return;
+   estimate_burst = (estimate_burst+time)/2;
 }
