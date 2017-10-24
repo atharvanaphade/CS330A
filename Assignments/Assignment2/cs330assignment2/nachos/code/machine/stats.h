@@ -30,7 +30,6 @@ class Statistics {
     int numCPUBursts; 	// non-zero CPU burst only
     int totalCPUBurstTime;
     int avgCPUBurstLength;
-    int cpuUtilization;
 
     int numDiskReads;		// number of disk read requests
     int numDiskWrites;		// number of disk write requests
