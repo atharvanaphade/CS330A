@@ -80,6 +80,11 @@ TimerInterruptHandler(int dummy)
         }
         //printf("[%d] Timer interrupt.\n", stats->totalTicks);
 	if(schedulingAlgorithm > 2){
+	    // non-zero CPU bursts
+	    if(stats->totalTicks != currentThread->burst_start){
+		stats->numCPUBursts++;
+		stats->totalCPUBurstTime+=(stats->totalTicks-currentThread->burst_start);
+	    }
 	    currentThread->updateBurstEstimate(stats->totalTicks-currentThread->burst_start);
 	    interrupt->YieldOnReturn();
 	}

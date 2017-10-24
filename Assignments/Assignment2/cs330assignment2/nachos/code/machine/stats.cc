@@ -22,6 +22,7 @@ Statistics::Statistics()
     numDiskReads = numDiskWrites = 0;
     numConsoleCharsRead = numConsoleCharsWritten = 0;
     numPageFaults = numPacketsSent = numPacketsRecvd = 0;
+    numCPUBursts=totalCPUBurstTime=avgCPUBurstLength=0;
 }
 
 //----------------------------------------------------------------------
@@ -41,4 +42,12 @@ Statistics::Print()
     printf("Paging: faults %d\n", numPageFaults);
     printf("Network I/O: packets received %d, sent %d\n", numPacketsRecvd, 
 	numPacketsSent);
+
+    // Our Statistics:
+
+    // Computing Average CPU burst length
+    avgCPUBurstLength=(totalCPUBurstTime)/numCPUBursts;
+    printf("Total CPU busy time: %d",totalCPUBurstTime);
+    printf("Average CPU burst length: %d",avgCPUBurstLength);
+    printf("Number of non-zero CPU bursts observed: %d",numCPUBursts);
 }

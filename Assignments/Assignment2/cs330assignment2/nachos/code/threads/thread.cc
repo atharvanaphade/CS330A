@@ -307,6 +307,11 @@ NachOSThread::PutThreadToSleep ()
 
     ASSERT(this == currentThread);
     ASSERT(interrupt->getLevel() == IntOff);
+    // non-zero CPU bursts
+    if(stats->totalTicks != currentThread->burst_start){
+       stats->numCPUBursts++;
+       stats->totalCPUBurstTime+=(stats->totalTicks-currentThread->burst_start);
+    }
     currentThread->updateBurstEstimate(stats->totalTicks-currentThread->burst_start);
 
     DEBUG('t', "Sleeping thread \"%s\" with pid %d\n", getName(), pid);

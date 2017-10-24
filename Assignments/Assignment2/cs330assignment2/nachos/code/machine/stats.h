@@ -27,6 +27,9 @@ class Statistics {
     int userTicks;       	// Time spent executing user code
 				// (this is also equal to # of
 				// user instructions executed)
+    int numCPUBursts; 	// non-zero CPU burst only
+    int totalCPUBurstTime;
+    int avgCPUBurstLength;
 
     int numDiskReads;		// number of disk read requests
     int numDiskWrites;		// number of disk write requests
