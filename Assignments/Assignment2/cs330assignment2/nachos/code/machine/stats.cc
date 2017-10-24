@@ -23,6 +23,7 @@ Statistics::Statistics()
     numConsoleCharsRead = numConsoleCharsWritten = 0;
     numPageFaults = numPacketsSent = numPacketsRecvd = 0;
     numCPUBursts=totalCPUBurstTime=avgCPUBurstLength=0;
+    cpuUtilization=0;
 }
 
 //----------------------------------------------------------------------
@@ -47,7 +48,11 @@ Statistics::Print()
 
     // Computing Average CPU burst length
     avgCPUBurstLength=(totalCPUBurstTime)/numCPUBursts;
+    // Computing CPU Utilization
+    cpuUtilization=(totalCPUBurstTime)/totalTicks;
     printf("Total CPU busy time: %d",totalCPUBurstTime);
+    printf("Total Execution Time: %d",totalTicks);
+    printf("CPU Utilization: %d",cpuUtilization);
     printf("Average CPU burst length: %d",avgCPUBurstLength);
     printf("Number of non-zero CPU bursts observed: %d",numCPUBursts);
 }
