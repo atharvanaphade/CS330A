@@ -57,9 +57,14 @@ ProcessScheduler::MoveThreadToReadyQueue (NachOSThread *thread)
     DEBUG('t', "Putting thread %s with PID %d on ready list.\n", thread->getName(), thread->GetPID());
 
     thread->setStatus(READY);
+
    if(schedulingAlgorithm == 2)
     //FOR SDF
      listOfReadyThreads->SortedInsert((void *)thread, thread->estimate_burst);
+   else if(schedulingAlgorithm == 3)
+   {
+      listOfReadyThreads->SortedInsert((void *)thread, stats->totalTicks);
+   }
    else
         listOfReadyThreads->Append((void *)thread);
  
@@ -76,11 +81,15 @@ ProcessScheduler::MoveThreadToReadyQueue (NachOSThread *thread)
 NachOSThread *
 ProcessScheduler::SelectNextReadyThread ()
 {
-    //FOR SDF
-    if(schedulingAlgorithm == 2)
-        return (NachOSThread *)listOfReadyThreads->SortedRemove(NULL);
-    else
-        return (NachOSThread *)listOfReadyThreads->Remove();
+   if(schedulingAlgorithm == 3)
+   {
+      return (NachOSThread *)listOfReadyThreads->SortedRemove(NULL);
+   }
+      //FOR SDF
+   else if(schedulingAlgorithm == 2)
+      return (NachOSThread *)listOfReadyThreads->SortedRemove(NULL);
+   else
+      return (NachOSThread *)listOfReadyThreads->Remove();
 }
 
 //----------------------------------------------------------------------
