@@ -48,8 +48,10 @@ NachOSThread::NachOSThread(char* threadName)
 
     threadArray[thread_index] = this;
     priority = 100;
-    base_priority = 0;
+    base_priority = 50;
     cpu_count = 0;
+    wait_start = 0;
+    wait_time = 0;
     pid = thread_index;
     thread_index++;
     ASSERT(thread_index < MAX_THREAD_COUNT);
@@ -247,6 +249,7 @@ NachOSThread::Exit (bool terminateSim, int exitcode)
         //updatePriority();
     }
 
+    stats->totalWaitingTime += currentThread->wait_time;
     threadToBeDestroyed = currentThread;
 
     NachOSThread *nextThread;

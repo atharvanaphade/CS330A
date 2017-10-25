@@ -1,4 +1,2 @@
-4
-../test/testloop 10
-../test/testloop 20
+2
 ../test/testloop 10

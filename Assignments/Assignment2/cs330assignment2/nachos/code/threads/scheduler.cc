@@ -57,7 +57,7 @@ ProcessScheduler::MoveThreadToReadyQueue (NachOSThread *thread)
     DEBUG('t', "Putting thread %s with PID %d on ready list.\n", thread->getName(), thread->GetPID());
 
     thread->setStatus(READY);
-
+    thread->wait_start = stats->totalTicks;
    if(schedulingAlgorithm == 2)
     //FOR SDF
      listOfReadyThreads->SortedInsert((void *)thread, thread->estimate_burst);
@@ -87,6 +87,7 @@ ProcessScheduler::SelectNextReadyThread ()
    else if(schedulingAlgorithm == 4){
        //UNIX-like scheduler
        if(!listOfReadyThreads->IsEmpty()) return (NachOSThread *)listOfReadyThreads->UNIX_next_thread();
+       else return NULL;
    }
    else return (NachOSThread *)listOfReadyThreads->Remove();
 }
@@ -125,6 +126,7 @@ ProcessScheduler::ScheduleThread (NachOSThread *nextThread)
     currentThread = nextThread;		    // switch to the next thread
     currentThread->setStatus(RUNNING);      // nextThread is now running
     currentThread->burst_start = stats->totalTicks;
+    currentThread->wait_time += currentThread->burst_start - currentThread->wait_time;
     DEBUG('t', "Switching from thread \"%s\" with pid %d to thread \"%s\" with pid %d\n",
 	  oldThread->getName(), oldThread->GetPID(), nextThread->getName(), nextThread->GetPID());
 
