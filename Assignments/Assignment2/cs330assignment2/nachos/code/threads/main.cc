@@ -141,7 +141,8 @@ main(int argc, char **argv)
 				exec_thread->space = space;
 				exec_thread->CreateThreadStack(ForkStartFunction, 0);
 				exec_thread->SaveUserState();
-				exec_thread->priority = atoi(pri_val);
+				exec_thread->priority = 50+atoi(pri_val);
+				exec_thread->base_priority = 50+atoi(pri_val);
 				exec_thread->Schedule();
 			}
 			fclose(fp);

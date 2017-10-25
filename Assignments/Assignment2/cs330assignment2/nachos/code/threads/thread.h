@@ -84,6 +84,8 @@ class NachOSThread {
 
   public:
     int priority;
+    int base_priority;
+    int cpu_count;
     int burst_start;
     int estimate_burst;
     NachOSThread(char* debugName);		// initialize a Thread 

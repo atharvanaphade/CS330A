@@ -48,6 +48,8 @@ NachOSThread::NachOSThread(char* threadName)
 
     threadArray[thread_index] = this;
     priority = 100;
+    base_priority = 0;
+    cpu_count = 0;
     pid = thread_index;
     thread_index++;
     ASSERT(thread_index < MAX_THREAD_COUNT);
@@ -218,6 +220,18 @@ NachOSThread::Exit (bool terminateSim, int exitcode)
 
     DEBUG('t', "Finishing thread \"%s\" with pid %d\n", getName(), pid);
 
+    int burst_len = stats->totalTicks-currentThread->burst_start;
+    if(burst_len!=0){
+        for(int i=0; i<MAX_THREAD_COUNT; i++){
+            if(threadArray[i]!=NULL) {
+                if(threadArray[i]==currentThread)
+                    threadArray[i]->cpu_count+= burst_len;
+                threadArray[i]->cpu_count/=2;
+                threadArray[i]->priority = currentThread->base_priority + currentThread->cpu_count/2;
+            }
+        }
+    }
+
     threadToBeDestroyed = currentThread;
 
     NachOSThread *nextThread;
@@ -272,6 +286,22 @@ NachOSThread::YieldCPU ()
     
     DEBUG('t', "Yielding thread \"%s\" with pid %d\n", getName(), pid);
     
+
+    int burst_len = stats->totalTicks - currentThread->burst_start;
+    // non-zero CPU bursts
+    if(burst_len >= TimerTicks){
+        stats->numCPUBursts++;
+        stats->totalCPUBurstTime+=(burst_len);
+        currentThread->updateBurstEstimate(burst_len);
+        for(int i=0; i<MAX_THREAD_COUNT; i++){
+            if(threadArray[i]!=NULL) {
+                if(threadArray[i]==currentThread)
+                    threadArray[i]->cpu_count+= burst_len;
+                threadArray[i]->cpu_count/=2;
+                threadArray[i]->priority = currentThread->base_priority + currentThread->cpu_count/2;
+            }
+        }
+    }
     nextThread = scheduler->SelectNextReadyThread();
     if (nextThread != NULL) {
 	scheduler->MoveThreadToReadyQueue(this);
@@ -311,12 +341,21 @@ NachOSThread::PutThreadToSleep ()
     ASSERT(this == currentThread);
     ASSERT(interrupt->getLevel() == IntOff);
     // non-zero CPU bursts
-    if(stats->totalTicks != currentThread->burst_start){
+    int burst_len = stats->totalTicks-currentThread->burst_start;
+    if(burst_len != 0){
        stats->numCPUBursts++;
-       stats->totalCPUBurstTime+=(stats->totalTicks-currentThread->burst_start);
+       stats->totalCPUBurstTime+=(burst_len);
+       for(int i=0; i<MAX_THREAD_COUNT; i++){
+        if(threadArray[i]!=NULL) {
+            if(threadArray[i]==currentThread)
+                threadArray[i]->cpu_count+= burst_len;
+            threadArray[i]->cpu_count/=2;
+            threadArray[i]->priority = currentThread->base_priority + currentThread->cpu_count/2;
+            }
+        }
     }
     currentThread->updateBurstEstimate(stats->totalTicks-currentThread->burst_start);
-
+    
     DEBUG('t', "Sleeping thread \"%s\" with pid %d\n", getName(), pid);
 
     status = BLOCKED;

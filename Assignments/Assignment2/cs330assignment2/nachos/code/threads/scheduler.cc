@@ -63,7 +63,7 @@ ProcessScheduler::MoveThreadToReadyQueue (NachOSThread *thread)
      listOfReadyThreads->SortedInsert((void *)thread, thread->estimate_burst);
    else if(schedulingAlgorithm == 3)
    {
-      listOfReadyThreads->SortedInsert((void *)thread, stats->totalTicks);
+      listOfReadyThreads->Append((void *)thread);
    }
    else
         listOfReadyThreads->Append((void *)thread);
@@ -81,13 +81,10 @@ ProcessScheduler::MoveThreadToReadyQueue (NachOSThread *thread)
 NachOSThread *
 ProcessScheduler::SelectNextReadyThread ()
 {
-   if(schedulingAlgorithm == 3)
-   {
+   if(schedulingAlgorithm == 2)//FOR SDF
       return (NachOSThread *)listOfReadyThreads->SortedRemove(NULL);
-   }
-      //FOR SDF
-   else if(schedulingAlgorithm == 2)
-      return (NachOSThread *)listOfReadyThreads->SortedRemove(NULL);
+   else if(schedulingAlgorithm == 3)
+      return (NachOSThread *)listOfReadyThreads->Remove();
    else
       return (NachOSThread *)listOfReadyThreads->Remove();
 }
