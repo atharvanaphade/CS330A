@@ -24,6 +24,7 @@ Statistics::Statistics()
     numPageFaults = numPacketsSent = numPacketsRecvd = 0;
     numCPUBursts=totalCPUBurstTime=avgCPUBurstLength=0;
     cpuUtilization=0;
+    totalWaitingTime = avgWaitingTime = numberOfThreads = 0;
 }
 
 //----------------------------------------------------------------------

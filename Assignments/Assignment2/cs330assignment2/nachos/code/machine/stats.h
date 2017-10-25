@@ -31,6 +31,9 @@ class Statistics {
     int totalCPUBurstTime;
     int avgCPUBurstLength;
     int cpuUtilization;
+    int totalWaitingTime;
+    int avgWaitingTime;
+    int numberOfThreads;
 
     int numDiskReads;		// number of disk read requests
     int numDiskWrites;		// number of disk write requests
