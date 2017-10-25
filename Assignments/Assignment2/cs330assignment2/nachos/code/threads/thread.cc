@@ -47,8 +47,8 @@ NachOSThread::NachOSThread(char* threadName)
 #endif
 
     threadArray[thread_index] = this;
-    priority = 100;
-    base_priority = 50;
+    priority = 0;
+    base_priority = 0;
     cpu_count = 0;
     wait_start = 0;
     wait_time = 0;
