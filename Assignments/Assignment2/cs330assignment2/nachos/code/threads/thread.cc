@@ -318,8 +318,15 @@ NachOSThread::YieldCPU ()
     }
     nextThread = scheduler->SelectNextReadyThread();
     if (nextThread != NULL) {
-	scheduler->MoveThreadToReadyQueue(this);
-	scheduler->ScheduleThread(nextThread);
+	if(currentThread->priority < nextThread->priority){
+		nextThread->wait_time+=stats->totalTicks - nextThread->wait_start;
+		scheduler->MoveThreadToReadyQueue(nextThread);
+		this->wait_start=stats->totalTicks;	
+		scheduler->ScheduleThread(this);
+	}else{
+		scheduler->MoveThreadToReadyQueue(this);
+		scheduler->ScheduleThread(nextThread);
+	}
     }else{
 	// update cpu burst start time
 	currentThread->burst_start=stats->totalTicks;
