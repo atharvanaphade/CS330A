@@ -1,4 +1,4 @@
-// thread.cc 
+// thread.cc
 //	Routines to manage threads.  There are four main operations:
 //
 //	ThreadFork -- create a thread to run a procedure concurrently
@@ -7,11 +7,11 @@
 //	FinishThread -- called when the forked procedure finishes, to clean up
 //	YieldCPU -- relinquish control over the CPU to another ready thread
 //	PutThreadToSleep -- relinquish control over the CPU, but thread is now blocked.
-//		In other words, it will not run again, until explicitly 
+//		In other words, it will not run again, until explicitly
 //		put back on the ready queue.
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
+// All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
@@ -21,7 +21,7 @@
 #include "system.h"
 
 #define STACK_FENCEPOST 0xdeadbeef	// this is put at the top of the
-					// execution stack, for detecting 
+					// execution stack, for detecting
 					// stack overflows
 
 //----------------------------------------------------------------------
@@ -31,7 +31,7 @@
 //
 //	"threadName" is an arbitrary string, useful for debugging.
 //----------------------------------------------------------------------
-
+extern int schedulingAlgorithm;
 NachOSThread::NachOSThread(char* threadName)
 {
     int i;
@@ -90,7 +90,7 @@ NachOSThread::~NachOSThread()
 
 //----------------------------------------------------------------------
 // NachOSThread::ThreadFork
-// 	Invoke (*func)(arg), allowing caller and callee to execute 
+// 	Invoke (*func)(arg), allowing caller and callee to execute
 //	concurrently.
 //
 //	NOTE: although our definition allows only a single integer argument
@@ -103,24 +103,24 @@ NachOSThread::~NachOSThread()
 //		2. Initialize the stack so that a call to SWITCH will
 //		cause it to run the procedure
 //		3. Put the thread on the ready queue
-// 	
+//
 //	"func" is the procedure to run concurrently.
 //	"arg" is a single argument to be passed to the procedure.
 //----------------------------------------------------------------------
 
-void 
+void
 NachOSThread::ThreadFork(VoidFunctionPtr func, int arg)
 {
     DEBUG('t', "Forking thread \"%s\" with pid %d with func = 0x%x, arg = %d\n",
 	  name, pid, (int) func, arg);
-    
+
     CreateThreadStack(func, arg);
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
-    scheduler->MoveThreadToReadyQueue(this);	// MoveThreadToReadyQueue assumes that interrupts 
+    scheduler->MoveThreadToReadyQueue(this);	// MoveThreadToReadyQueue assumes that interrupts
 					// are disabled!
     (void) interrupt->SetLevel(oldLevel);
-}    
+}
 
 //----------------------------------------------------------------------
 // NachOSThread::CheckOverflow
@@ -150,16 +150,16 @@ NachOSThread::CheckOverflow()
 
 //----------------------------------------------------------------------
 // NachOSThread::FinishThread
-// 	Called by ThreadRoot when a thread is done executing the 
+// 	Called by ThreadRoot when a thread is done executing the
 //	forked procedure.
 //
-// 	NOTE: we don't immediately de-allocate the thread data structure 
-//	or the execution stack, because we're still running in the thread 
-//	and we're still on the stack!  Instead, we set "threadToBeDestroyed", 
+// 	NOTE: we don't immediately de-allocate the thread data structure
+//	or the execution stack, because we're still running in the thread
+//	and we're still on the stack!  Instead, we set "threadToBeDestroyed",
 //	so that ProcessScheduler::Schedule() will call the destructor, once we're
 //	running in the context of a different thread.
 //
-// 	NOTE: we disable interrupts, so that we don't get a time slice 
+// 	NOTE: we disable interrupts, so that we don't get a time slice
 //	between setting threadToBeDestroyed, and going to sleep.
 //----------------------------------------------------------------------
 
@@ -167,11 +167,11 @@ NachOSThread::CheckOverflow()
 void
 NachOSThread::FinishThread ()
 {
-    (void) interrupt->SetLevel(IntOff);		
+    (void) interrupt->SetLevel(IntOff);
     ASSERT(this == currentThread);
-    
+
     DEBUG('t', "Finishing thread \"%s\" with pid %d\n", getName(), pid);
-    
+
     threadToBeDestroyed = currentThread;
     PutThreadToSleep();					// invokes SWITCH
     // not reached
@@ -219,9 +219,15 @@ NachOSThread::Exit (bool terminateSim, int exitcode)
     ASSERT(this == currentThread);
 
     DEBUG('t', "Finishing thread \"%s\" with pid %d\n", getName(), pid);
-
+    // non-zero CPU bursts
+    if(stats->totalTicks != currentThread->burst_start){
+       stats->numCPUBursts++;
+       stats->totalCPUBurstTime+=(stats->totalTicks-currentThread->burst_start);
+    }
+    currentThread->updateBurstEstimate(stats->totalTicks-currentThread->burst_start);
+    
     int burst_len = stats->totalTicks-currentThread->burst_start;
-    if(burst_len!=0){
+    if(burst_len!=0 && schedulingAlgorithm == 4){
         for(int i=0; i<MAX_THREAD_COUNT; i++){
             if(threadArray[i]!=NULL) {
                 if(threadArray[i]==currentThread)
@@ -271,7 +277,7 @@ NachOSThread::Exit (bool terminateSim, int exitcode)
 //	NOTE: we disable interrupts, so that looking at the thread
 //	on the front of the ready list, and switching to it, can be done
 //	atomically.  On return, we re-set the interrupt level to its
-//	original state, in case we are called with interrupts disabled. 
+//	original state, in case we are called with interrupts disabled.
 //
 // 	Similar to NachOSThread::PutThreadToSleep(), but a little different.
 //----------------------------------------------------------------------
@@ -281,11 +287,11 @@ NachOSThread::YieldCPU ()
 {
     NachOSThread *nextThread;
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
-    
+
     ASSERT(this == currentThread);
-    
+
     DEBUG('t', "Yielding thread \"%s\" with pid %d\n", getName(), pid);
-    
+
 
     int burst_len = stats->totalTicks - currentThread->burst_start;
     // non-zero CPU bursts
@@ -293,12 +299,14 @@ NachOSThread::YieldCPU ()
         stats->numCPUBursts++;
         stats->totalCPUBurstTime+=(burst_len);
         currentThread->updateBurstEstimate(burst_len);
-        for(int i=0; i<MAX_THREAD_COUNT; i++){
-            if(threadArray[i]!=NULL) {
-                if(threadArray[i]==currentThread)
-                    threadArray[i]->cpu_count+= burst_len;
-                threadArray[i]->cpu_count/=2;
-                threadArray[i]->priority = currentThread->base_priority + currentThread->cpu_count/2;
+        if(schedulingAlgorithm == 4){
+            for(int i=0; i<MAX_THREAD_COUNT; i++){
+                if(threadArray[i]!=NULL) {
+                    if(threadArray[i]==currentThread)
+                        threadArray[i]->cpu_count+= burst_len;
+                    threadArray[i]->cpu_count/=2;
+                    threadArray[i]->priority = currentThread->base_priority + currentThread->cpu_count/2;
+                }
             }
         }
     }
@@ -328,7 +336,7 @@ NachOSThread::YieldCPU ()
 //
 //	NOTE: we assume interrupts are already disabled, because it
 //	is called from the synchronization routines which must
-//	disable interrupts for atomicity.   We need interrupts off 
+//	disable interrupts for atomicity.   We need interrupts off
 //	so that there can't be a time slice between pulling the first thread
 //	off the ready list, and switching to it.
 //----------------------------------------------------------------------
@@ -345,17 +353,19 @@ NachOSThread::PutThreadToSleep ()
     if(burst_len != 0){
        stats->numCPUBursts++;
        stats->totalCPUBurstTime+=(burst_len);
-       for(int i=0; i<MAX_THREAD_COUNT; i++){
-        if(threadArray[i]!=NULL) {
-            if(threadArray[i]==currentThread)
-                threadArray[i]->cpu_count+= burst_len;
-            threadArray[i]->cpu_count/=2;
-            threadArray[i]->priority = currentThread->base_priority + currentThread->cpu_count/2;
+       if(schedulingAlgorithm == 4){
+           for(int i=0; i<MAX_THREAD_COUNT; i++){
+            if(threadArray[i]!=NULL) {
+                if(threadArray[i]==currentThread)
+                    threadArray[i]->cpu_count+= burst_len;
+                threadArray[i]->cpu_count/=2;
+                threadArray[i]->priority = currentThread->base_priority + currentThread->cpu_count/2;
+                }
             }
         }
     }
     currentThread->updateBurstEstimate(stats->totalTicks-currentThread->burst_start);
-    
+
     DEBUG('t', "Sleeping thread \"%s\" with pid %d\n", getName(), pid);
 
     status = BLOCKED;
@@ -369,7 +379,7 @@ NachOSThread::PutThreadToSleep ()
 // ThreadFinish, InterruptEnable, ThreadPrint
 //	Dummy functions because C++ does not allow a pointer to a member
 //	function.  So in order to do this, we create a dummy C function
-//	(which we can pass a pointer to), that then simply calls the 
+//	(which we can pass a pointer to), that then simply calls the
 //	member function.
 //----------------------------------------------------------------------
 
@@ -415,7 +425,7 @@ NachOSThread::CreateThreadStack (VoidFunctionPtr func, int arg)
 #endif  // HOST_SPARC
     *stack = STACK_FENCEPOST;
 #endif  // HOST_SNAKE
-    
+
     machineState[PCState] = (int) _ThreadRoot;
     machineState[StartupPCState] = (int) InterruptEnable;
     machineState[InitialPCState] = (int) func;
@@ -430,8 +440,8 @@ NachOSThread::CreateThreadStack (VoidFunctionPtr func, int arg)
 // NachOSThread::SaveUserState
 //	Save the CPU state of a user program on a context switch.
 //
-//	Note that a user program thread has *two* sets of CPU registers -- 
-//	one for its state while executing user code, one for its state 
+//	Note that a user program thread has *two* sets of CPU registers --
+//	one for its state while executing user code, one for its state
 //	while executing kernel code.  This routine saves the former.
 //----------------------------------------------------------------------
 
@@ -449,8 +459,8 @@ NachOSThread::SaveUserState()
 // NachOSThread::RestoreUserState
 //	Restore the CPU state of a user program on a context switch.
 //
-//	Note that a user program thread has *two* sets of CPU registers -- 
-//	one for its state while executing user code, one for its state 
+//	Note that a user program thread has *two* sets of CPU registers --
+//	one for its state while executing user code, one for its state
 //	while executing kernel code.  This routine restores the former.
 //----------------------------------------------------------------------
 

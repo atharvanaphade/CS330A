@@ -1,2 +1,4 @@
 3
 ../test/testloop
+../test/testloop
+../test/testloop
