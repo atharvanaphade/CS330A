@@ -63,7 +63,6 @@ enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED };
 
 // external function, dummy routine whose sole job is to call NachOSThread::Print
 extern void ThreadPrint(int arg);
-
 // The following class defines a "thread control block" -- which
 // represents a single thread of execution.
 //
@@ -90,6 +89,8 @@ class NachOSThread {
     int estimate_burst;
     int wait_start;
     int wait_time;
+    int job_completion_time=0;
+    int wait_start = 0;
     NachOSThread(char* debugName);		// initialize a Thread
     ~NachOSThread(); 				// deallocate a Thread
 					// NOTE -- thread being deleted

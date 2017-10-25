@@ -26,7 +26,9 @@ Statistics::Statistics()
     numPageFaults = numPacketsSent = numPacketsRecvd = 0;
     numCPUBursts=totalCPUBurstTime=avgCPUBurstLength=0;
     cpuUtilization=0;
-    totalWaitingTime = 0;
+    totalWaitingTime = avgWaitingTime = numberOfThreads = 0;
+    minBurstTime = 100000;
+    maxBurstTime = 0;
 }
 
 //----------------------------------------------------------------------
@@ -56,6 +58,8 @@ Statistics::Print()
     printf("Total CPU busy time: %d\n",totalCPUBurstTime);
     printf("Total Execution Time: %d\n",totalTicks);
     printf("CPU Utilization: %d\n",cpuUtilization);
+    printf("Minimum CPU burst length: %d\n",minBurstTime);
+    printf("Maximum CPU burst length: %d\n",maxBurstTime);
     printf("Average CPU burst length: %d\n",avgCPUBurstLength);
     printf("Number of non-zero CPU bursts observed: %d\n",numCPUBursts);
     printf("Average Wait Time: %d\n",totalWaitingTime/thread_index);
