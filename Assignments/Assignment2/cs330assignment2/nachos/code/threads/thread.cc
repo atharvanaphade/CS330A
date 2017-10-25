@@ -211,11 +211,11 @@ void NachOSThread::updatePriority(){
     int burst_len = stats->totalTicks - currentThread->burst_start;
     if(schedulingAlgorithm == 4){
         for(int i=0; i<MAX_THREAD_COUNT; i++){
-         if(threadArray[i]!=NULL) {
-             if(threadArray[i]==currentThread)
-                 threadArray[i]->cpu_count+= burst_len;
-             threadArray[i]->cpu_count/=2;
-             threadArray[i]->priority = currentThread->base_priority + currentThread->cpu_count/2;
+	     if(threadArray[i]!=NULL && !exitThreadArray[i]) {
+		 if(threadArray[i]==currentThread)
+			 threadArray[i]->cpu_count+= burst_len;
+		 (threadArray[i]->cpu_count)/=2;
+		 threadArray[i]->priority = threadArray[i]->base_priority + (threadArray[i]->cpu_count)/2;
              }
          }
     }
@@ -246,7 +246,7 @@ NachOSThread::Exit (bool terminateSim, int exitcode)
 
     int burst_len = stats->totalTicks-currentThread->burst_start;
     if(burst_len!=0){
-        //updatePriority();
+        updatePriority();
     }
 
     stats->totalWaitingTime += currentThread->wait_time;
@@ -311,7 +311,7 @@ NachOSThread::YieldCPU ()
         stats->numCPUBursts++;
         stats->totalCPUBurstTime+=(burst_len);
         currentThread->updateBurstEstimate(burst_len);
-        //updatePriority();
+        updatePriority();
     }
     nextThread = scheduler->SelectNextReadyThread();
     if (nextThread != NULL) {
@@ -356,7 +356,7 @@ NachOSThread::PutThreadToSleep ()
     if(burst_len != 0){
        stats->numCPUBursts++;
        stats->totalCPUBurstTime+=(burst_len);
-       //updatePriority();
+       updatePriority();
     }
     currentThread->updateBurstEstimate(stats->totalTicks-currentThread->burst_start);
 

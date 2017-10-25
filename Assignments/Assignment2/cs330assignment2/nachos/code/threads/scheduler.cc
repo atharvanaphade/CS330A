@@ -126,7 +126,7 @@ ProcessScheduler::ScheduleThread (NachOSThread *nextThread)
     currentThread = nextThread;		    // switch to the next thread
     currentThread->setStatus(RUNNING);      // nextThread is now running
     currentThread->burst_start = stats->totalTicks;
-    currentThread->wait_time += currentThread->burst_start - currentThread->wait_time;
+    currentThread->wait_time += currentThread->burst_start - currentThread->wait_start;
     DEBUG('t', "Switching from thread \"%s\" with pid %d to thread \"%s\" with pid %d\n",
 	  oldThread->getName(), oldThread->GetPID(), nextThread->getName(), nextThread->GetPID());
 

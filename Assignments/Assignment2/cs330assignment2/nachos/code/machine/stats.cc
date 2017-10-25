@@ -58,5 +58,5 @@ Statistics::Print()
     printf("CPU Utilization: %d\n",cpuUtilization);
     printf("Average CPU burst length: %d\n",avgCPUBurstLength);
     printf("Number of non-zero CPU bursts observed: %d\n",numCPUBursts);
-    printf("Average weight Time: %d\n",totalWaitingTime/thread_index);
+    printf("Average Wait Time: %d\n",totalWaitingTime/thread_index);
 }
