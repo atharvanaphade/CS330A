@@ -90,7 +90,6 @@ class NachOSThread {
     int wait_start;
     int wait_time;
     int job_completion_time=0;
-    int wait_start = 0;
     NachOSThread(char* debugName);		// initialize a Thread
     ~NachOSThread(); 				// deallocate a Thread
 					// NOTE -- thread being deleted
