@@ -70,6 +70,6 @@ Statistics::Print()
     printf("Maximum thread completion time: %d\n",maxCompletionTime);
     printf("Minimum thread completion time: %d\n",minCompletionTime);
     printf("Average thread completion time: %d\n",avgCompletionTime);
-    printf("Variance of thread completion time: %d\n",(totCompletionTime2/(thread_index-1)-avgCompletionTime*avgCompletionTime));
+    printf("Variance of thread completion time: %lld\n",(totCompletionTime2 - (long long)avgCompletionTime*avgCompletionTime));
     printf("Burst estimation error ratio: %f\n",(float)burstEstimationErr/totalCPUBurstTime);
 }

@@ -110,11 +110,11 @@ ExceptionHandler(ExceptionType which)
        // The children will continue to run.
        // We will worry about this when and if we implement signals.
        exitThreadArray[currentThread->GetPID()] = true;
-        
+
        int currComptime = stats->totalTicks;
     //    printf("Current comp time: %d\n", currComptime);
        stats->totCompletionTime+=currComptime;
-       stats->totCompletionTime2+=currComptime*currComptime;
+       stats->totCompletionTime2+=(long long)currComptime*(currComptime/(thread_index-1));
        if(stats->maxCompletionTime<currComptime)
             stats->maxCompletionTime=currComptime;
         if(stats->minCompletionTime>currComptime)
