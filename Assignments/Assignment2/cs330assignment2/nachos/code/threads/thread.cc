@@ -210,7 +210,7 @@ NachOSThread::SetChildExitCode (int childpid, int ecode)
 
 void NachOSThread::updatePriority(){
     int burst_len = stats->totalTicks - currentThread->burst_start;
-    if(schedulingAlgorithm == 4){
+    if(schedulingAlgorithm >= 7 && schedulingAlgorithm <= 10){
         for(int i=0; i<MAX_THREAD_COUNT; i++){
 	     if(threadArray[i]!=NULL && !exitThreadArray[i]) {
 		 if(threadArray[i]==currentThread)

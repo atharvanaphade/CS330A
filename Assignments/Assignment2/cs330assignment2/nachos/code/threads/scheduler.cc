@@ -61,7 +61,7 @@ ProcessScheduler::MoveThreadToReadyQueue (NachOSThread *thread)
    if(schedulingAlgorithm == 2)
     //FOR SDF
      listOfReadyThreads->SortedInsert((void *)thread, thread->estimate_burst);
-   else if(schedulingAlgorithm == 3)
+   else if(schedulingAlgorithm >= 3 && schedulingAlgorithm <=6)
    {
       listOfReadyThreads->Append((void *)thread);
    }
@@ -83,8 +83,8 @@ ProcessScheduler::SelectNextReadyThread ()
 {
    if(schedulingAlgorithm == 2) return (NachOSThread *)listOfReadyThreads->SortedRemove(NULL);//FOR SDF
 
-   else if(schedulingAlgorithm == 3) return (NachOSThread *)listOfReadyThreads->Remove();
-   else if(schedulingAlgorithm == 4){
+   else if(schedulingAlgorithm >= 3 && schedulingAlgorithm <= 6) return (NachOSThread *)listOfReadyThreads->Remove();
+   else if(schedulingAlgorithm >= 7 &&  schedulingAlgorithm <= 10){
        //UNIX-like scheduler
        if(!listOfReadyThreads->IsEmpty()) return (NachOSThread *)listOfReadyThreads->UNIX_next_thread();
        else return NULL;
