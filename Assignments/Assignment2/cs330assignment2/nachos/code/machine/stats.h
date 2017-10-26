@@ -41,6 +41,7 @@ class Statistics {
     long long totCompletionTime2;
     int maxCompletionTime;
     int minCompletionTime;
+    int burstEstimationErr;
 
     int numDiskReads;		// number of disk read requests
     int numDiskWrites;		// number of disk write requests
