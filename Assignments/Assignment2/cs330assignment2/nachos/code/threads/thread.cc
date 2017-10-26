@@ -52,6 +52,7 @@ NachOSThread::NachOSThread(char* threadName)
     cpu_count = 0;
     wait_start = 0;
     wait_time = 0;
+    // job_completion_time = 0;
     pid = thread_index;
     thread_index++;
     ASSERT(thread_index < MAX_THREAD_COUNT);
@@ -236,9 +237,9 @@ NachOSThread::Exit (bool terminateSim, int exitcode)
     (void) interrupt->SetLevel(IntOff);
     ASSERT(this == currentThread);
 
-    //assign job completion time
-    currentThread->job_completion_time=stats->totalTicks;
-    printf("Job completion time: %d\n", currentThread->job_completion_time);
+    // //assign job completion time
+    // currentThread->job_completion_time=stats->totalTicks;
+    // printf("Job completion time: %d\n", currentThread->job_completion_time);
     DEBUG('t', "Finishing thread \"%s\" with pid %d\n", getName(), pid);
     // non-zero CPU bursts
     if(stats->totalTicks != currentThread->burst_start){

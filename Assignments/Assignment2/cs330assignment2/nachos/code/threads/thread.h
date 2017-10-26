@@ -89,7 +89,7 @@ class NachOSThread {
     int estimate_burst;
     int wait_start;
     int wait_time;
-    int job_completion_time=0;
+    // int job_completion_time;
     NachOSThread(char* debugName);		// initialize a Thread
     ~NachOSThread(); 				// deallocate a Thread
 					// NOTE -- thread being deleted

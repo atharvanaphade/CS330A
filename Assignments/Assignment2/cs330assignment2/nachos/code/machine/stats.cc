@@ -27,6 +27,8 @@ Statistics::Statistics()
     numCPUBursts=totalCPUBurstTime=avgCPUBurstLength=0;
     cpuUtilization=0;
     totalWaitingTime = avgWaitingTime = numberOfThreads = 0;
+    totCompletionTime = avgCompletionTime = totCompletionTime2 = maxCompletionTime = 0;
+    minCompletionTime = 100000;
     minBurstTime = 100000;
     maxBurstTime = 0;
 }
@@ -55,6 +57,7 @@ Statistics::Print()
     avgCPUBurstLength=(totalCPUBurstTime)/numCPUBursts;
     // Computing CPU utilization
     cpuUtilization=(totalCPUBurstTime*100)/totalTicks;
+    avgCompletionTime = totCompletionTime/(thread_index-1);
     printf("Total CPU busy time: %d\n",totalCPUBurstTime);
     printf("Total Execution Time: %d\n",totalTicks);
     printf("CPU Utilization: %d\n",cpuUtilization);
@@ -63,4 +66,8 @@ Statistics::Print()
     printf("Average CPU burst length: %d\n",avgCPUBurstLength);
     printf("Number of non-zero CPU bursts observed: %d\n",numCPUBursts);
     printf("Average Wait Time: %d\n",totalWaitingTime/thread_index);
+    printf("Maximum thread completion time: %d\n",maxCompletionTime);
+    printf("Minimum thread completion time: %d\n",minCompletionTime);
+    printf("Average thread completion time: %d\n",avgCompletionTime);
+    printf("Variance of thread completion time: %d\n",(totCompletionTime2/(thread_index-1)-avgCompletionTime*avgCompletionTime));
 }
