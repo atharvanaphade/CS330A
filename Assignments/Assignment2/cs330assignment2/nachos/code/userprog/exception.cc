@@ -1,4 +1,4 @@
-// exception.cc 
+// exception.cc
 //	Entry point into the Nachos kernel from user programs.
 //	There are two kinds of things that can cause control to
 //	transfer back to here from user code:
@@ -9,7 +9,7 @@
 //
 //	exceptions -- The user code does something that the CPU can't handle.
 //	For instance, accessing memory that doesn't exist, arithmetic errors,
-//	etc.  
+//	etc.
 //
 //	Interrupts (which can also cause control to transfer from user
 //	code into the Nachos kernel) are handled elsewhere.
@@ -18,7 +18,7 @@
 // Everything else core dumps.
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
+// All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
@@ -41,12 +41,12 @@
 //		arg3 -- r6
 //		arg4 -- r7
 //
-//	The result of the system call, if any, must be put back into r2. 
+//	The result of the system call, if any, must be put back into r2.
 //
 // And don't forget to increment the pc before returning. (Or else you'll
 // loop making the same system call forever!
 //
-//	"which" is the kind of exception.  The list of possible exceptions 
+//	"which" is the kind of exception.  The list of possible exceptions
 //	are in machine.h.
 //----------------------------------------------------------------------
 static Semaphore *readAvail;
@@ -111,16 +111,18 @@ ExceptionHandler(ExceptionType which)
        // We will worry about this when and if we implement signals.
        exitThreadArray[currentThread->GetPID()] = true;
 
+       int currComptime = stats->totalTicks;
+    //    printf("Current comp time: %d\n", currComptime);
+       stats->totCompletionTime+=currComptime;
+       stats->totCompletionTime2+=(long long)currComptime*(currComptime/(thread_index-1));
+       if(stats->maxCompletionTime<currComptime)
+            stats->maxCompletionTime=currComptime;
+        if(stats->minCompletionTime>currComptime)
+            stats->minCompletionTime=currComptime;
        // Find out if all threads have called exit
        for (i=0; i<thread_index; i++) {
           if (!exitThreadArray[i]) break;
        }
-       // non-zero CPU bursts
-       if(stats->totalTicks != currentThread->burst_start){
-          stats->numCPUBursts++;
-          stats->totalCPUBurstTime+=(stats->totalTicks-currentThread->burst_start);
-       }
-       currentThread->updateBurstEstimate(stats->totalTicks-currentThread->burst_start);
        currentThread->Exit(i==thread_index, exitcode);
     }
     else if ((which == SyscallException) && (type == SysCall_Exec)) {

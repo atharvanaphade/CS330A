@@ -1,3 +1,2 @@
-2
-../test/testloop
-../test/testloop
+1
+../test/testloop 10
