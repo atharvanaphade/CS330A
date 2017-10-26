@@ -31,6 +31,7 @@ Statistics::Statistics()
     minCompletionTime = 100000;
     minBurstTime = 100000;
     maxBurstTime = 0;
+    burstEstimationErr = 0;
 }
 
 //----------------------------------------------------------------------
@@ -70,4 +71,5 @@ Statistics::Print()
     printf("Minimum thread completion time: %d\n",minCompletionTime);
     printf("Average thread completion time: %d\n",avgCompletionTime);
     printf("Variance of thread completion time: %d\n",(totCompletionTime2/(thread_index-1)-avgCompletionTime*avgCompletionTime));
+    printf("Burst estimation error ratio: %f\n",(float)burstEstimationErr/totalCPUBurstTime);
 }

@@ -244,6 +244,7 @@ NachOSThread::Exit (bool terminateSim, int exitcode)
     // non-zero CPU bursts
     if(stats->totalTicks != currentThread->burst_start){
        stats->numCPUBursts++;
+       stats->burstEstimationErr+= abs(stats->totalTicks-currentThread->burst_start-currentThread->estimate_burst);
        stats->totalCPUBurstTime+=(stats->totalTicks-currentThread->burst_start);
     }
     currentThread->updateBurstEstimate(stats->totalTicks-currentThread->burst_start);
@@ -314,6 +315,7 @@ NachOSThread::YieldCPU ()
     if(burst_len >= TimerTicks){
         stats->numCPUBursts++;
         stats->totalCPUBurstTime+=(burst_len);
+        stats->burstEstimationErr+= abs(burst_len-currentThread->estimate_burst);
         currentThread->updateBurstEstimate(burst_len);
         updatePriority();
     }
@@ -367,10 +369,11 @@ NachOSThread::PutThreadToSleep ()
     if(burst_len != 0){
        stats->numCPUBursts++;
        stats->totalCPUBurstTime+=(burst_len);
+       stats->burstEstimationErr+= abs(burst_len-currentThread->estimate_burst);
+       currentThread->updateBurstEstimate(burst_len);       
        updatePriority();
     }
-    currentThread->updateBurstEstimate(stats->totalTicks-currentThread->burst_start);
-
+    
     DEBUG('t', "Sleeping thread \"%s\" with pid %d\n", getName(), pid);
 
     status = BLOCKED;
