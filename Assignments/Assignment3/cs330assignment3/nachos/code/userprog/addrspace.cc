@@ -148,25 +148,44 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace)
     // first, set up the translation
     TranslationEntry* parentPageTable = parentSpace->GetPageTable();
     KernelPageTable = new TranslationEntry[numVirtualPages];
+    int curPages=0;
     for (i = 0; i < numVirtualPages; i++) {
         KernelPageTable[i].virtualPage = i;
-        KernelPageTable[i].physicalPage = i+numPagesAllocated;
+        //KernelPageTable[i].physicalPage = i+numPagesAllocated;
         KernelPageTable[i].valid = parentPageTable[i].valid;
         KernelPageTable[i].use = parentPageTable[i].use;
         KernelPageTable[i].dirty = parentPageTable[i].dirty;
         KernelPageTable[i].readOnly = parentPageTable[i].readOnly;  	// if the code segment was entirely on
                                         			// a separate page, we could set its
                                         			// pages to be read-only
+        KernelPageTable[i].shared = parentPageTable[i].shared;
+	if (KernelPageTable[i].shared == TRUE ) {
+		KernelPageTable[i].physicalPage= parentPageTable[i].physicalPage;	
+	}else{
+        	KernelPageTable[i].physicalPage = curPages+numPagesAllocated;
+		curPages++;
+	}
     }
 
     // Copy the contents
-    unsigned startAddrParent = parentPageTable[0].physicalPage*PageSize;
+    /*unsigned startAddrParent = parentPageTable[0].physicalPage*PageSize;
     unsigned startAddrChild = numPagesAllocated*PageSize;
     for (i=0; i<size; i++) {
        machine->mainMemory[startAddrChild+i] = machine->mainMemory[startAddrParent+i];
+    }*/
+    for (i = 0; i < numVirtualPages; i++){
+	if(KernelPageTable[i].shared == TRUE ) {	
+		continue;
+	}
+    	unsigned startAddrParent = parentPageTable[i].physicalPage*PageSize;
+    	unsigned startAddrChild = KernelPageTable[i].physicalPage*PageSize;
+	for (unsigned j=0; j < PageSize; j++){
+		machine->mainMemory[startAddrChild+j] = machine->mainMemory[startAddrParent+j];
+	}
     }
 
-    numPagesAllocated += numVirtualPages;
+    //numPagesAllocated += numVirtualPages;
+    numPagesAllocated += curPages;
 }
 
 //----------------------------------------------------------------------
@@ -246,4 +265,10 @@ TranslationEntry*
 ProcessAddressSpace::GetPageTable()
 {
    return KernelPageTable;
+}
+
+void 
+ProcessAddressSpace::setKernelPageTable(TranslationEntry *ktable, unsigned int numV){
+	KernelPageTable=ktable;
+	numVirtualPages=numV;	
 }

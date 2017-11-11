@@ -300,7 +300,7 @@ ExceptionHandler(ExceptionType which)
        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
-    } else if ((which == SyscallException) && (type == SysCall_ShmAllocate){
+    } else if ((which == SyscallException) && (type == SysCall_ShmAllocate)){
 	int numSharedBytes = machine->ReadRegister(4);
 	int numSharedPages = (numSharedBytes+PageSize-1)/PageSize;
 	int prevNumVirtualPages = machine->KernelPageTableSize;
@@ -332,10 +332,15 @@ ExceptionHandler(ExceptionType which)
 	// change KernelPageTable of current process and machine
 	machine->KernelPageTable = newKernelPageTable;
 	machine->KernelPageTableSize = newNumVirtualPages;
-	(currentThread->space)->KernelPageTable = newKernelPageTable;
-	(currentThread->space)->numVirtualPages = newNumVirtualPages;
+	//(currentThread->space)->KernelPageTable = newKernelPageTable;
+	//(currentThread->space)->numVirtualPages = newNumVirtualPages; // not working, private
+	(currentThread->space)->setKernelPageTable(newKernelPageTable,newNumVirtualPages);
 	// return starting virtual address of the shared memory
 	machine->WriteRegister(2,prevNumVirtualPages*PageSize);
+       // Advance program counters.
+       machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+       machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+       machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }else {
 	printf("Unexpected user mode exception %d %d\n", which, type);
 	ASSERT(FALSE);

@@ -37,6 +37,8 @@ class ProcessAddressSpace {
     unsigned GetNumPages();
 
     TranslationEntry* GetPageTable();
+    
+    void setKernelPageTable(TranslationEntry *ktable, unsigned int numV);
 
   private:
     TranslationEntry *KernelPageTable;	// Assume linear page table translation
