@@ -300,7 +300,43 @@ ExceptionHandler(ExceptionType which)
        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
-    } else {
+    } else if ((which == SyscallException) && (type == SysCall_ShmAllocate){
+	int numSharedBytes = machine->ReadRegister(4);
+	int numSharedPages = (numSharedBytes+PageSize-1)/PageSize;
+	int prevNumVirtualPages = machine->KernelPageTableSize;
+	int newNumVirtualPages = numSharedPages+prevNumVirtualPages;
+	TranslationEntry *newKernelPageTable = new TranslationEntry[newNumVirtualPages];
+	TranslationEntry *tmpPageTable = machine->KernelPageTable;
+	for(int i=0;i<prevNumVirtualPages;i++){
+		newKernelPageTable[i].virtualPage = i;
+		newKernelPageTable[i].physicalPage = tmpPageTable[i].physicalPage;
+		newKernelPageTable[i].valid = tmpPageTable[i].valid;
+		newKernelPageTable[i].use = tmpPageTable[i].use;
+		newKernelPageTable[i].dirty= tmpPageTable[i].dirty;
+		newKernelPageTable[i].readOnly = tmpPageTable[i].readOnly;
+		newKernelPageTable[i].shared= tmpPageTable[i].shared;
+	}
+	int j=prevNumVirtualPages;
+	for(int i=0;i<numSharedPages;i++){
+		newKernelPageTable[i+j].virtualPage = i+j;
+		newKernelPageTable[i+j].physicalPage = i+numPagesAllocated;
+		newKernelPageTable[i+j].valid = TRUE;
+		newKernelPageTable[i+j].use = FALSE;
+		newKernelPageTable[i+j].dirty= FALSE;
+		newKernelPageTable[i+j].readOnly = FALSE;
+		newKernelPageTable[i+j].shared= TRUE;
+	}
+	numPagesAllocated += numSharedPages;
+	// TODO: free the old page table-done!
+	delete [] machine->KernelPageTable;	
+	// change KernelPageTable of current process and machine
+	machine->KernelPageTable = newKernelPageTable;
+	machine->KernelPageTableSize = newNumVirtualPages;
+	(currentThread->space)->KernelPageTable = newKernelPageTable;
+	(currentThread->space)->numVirtualPages = newNumVirtualPages;
+	// return starting virtual address of the shared memory
+	machine->WriteRegister(2,prevNumVirtualPages*PageSize);
+    }else {
 	printf("Unexpected user mode exception %d %d\n", which, type);
 	ASSERT(FALSE);
     }
