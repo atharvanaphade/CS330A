@@ -78,7 +78,7 @@ Machine::Machine(bool debug)
     availablePages = new List();
     for(int i=0;i<NumPhysPages;i++)
     {
-	availablePages.append((void *)i);
+	availablePages->Append((void *)i);
     }
 }
 

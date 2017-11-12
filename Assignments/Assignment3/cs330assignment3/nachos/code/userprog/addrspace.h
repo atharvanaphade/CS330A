@@ -39,7 +39,8 @@ class ProcessAddressSpace {
     TranslationEntry* GetPageTable();
     
     void setKernelPageTable(TranslationEntry *ktable, unsigned int numV);
-    OpenFile *execFile;
+    char *execFile;
+    void handlePageFault(int vpn);
   private:
     TranslationEntry *KernelPageTable;	// Assume linear page table translation
 					// for now!

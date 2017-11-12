@@ -39,6 +39,7 @@ LaunchUserProcess(char *filename)
 	return;
     }
     space = new ProcessAddressSpace(executable);    
+    space->execFile=filename;
     currentThread->space = space;
 
     delete executable;			// close file

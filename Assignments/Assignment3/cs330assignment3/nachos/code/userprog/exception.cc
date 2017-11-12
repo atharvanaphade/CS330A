@@ -27,6 +27,7 @@
 #include "console.h"
 #include "synch.h"
 
+
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -55,6 +56,7 @@ static void ReadAvail(int arg) { readAvail->V(); }
 static void WriteDone(int arg) { writeDone->V(); }
 
 extern void LaunchUserProcess (char*);
+
 
 void
 ForkStartFunction (int dummy)
@@ -134,7 +136,7 @@ ExceptionHandler(ExceptionType which)
        }
        buffer[i] = (*(char*)&memval);
        //Add all pages to availablePages queue but not shared pages
-       for(i = 0; i<machine->numVirtualPages; i++)
+       for(i = 0; i < machine->KernelPageTableSize; i++)
        {
           if(machine->KernelPageTable[i].shared == TRUE)
              continue;
@@ -179,6 +181,7 @@ ExceptionHandler(ExceptionType which)
        
        child = new NachOSThread("Forked thread", GET_NICE_FROM_PARENT);
        child->space = new ProcessAddressSpace (currentThread->space);  // Duplicates the address space
+       (child->space)->execFile=(currentThread->space)->execFile;
        child->SaveUserState ();		     		      // Duplicate the register set
        child->ResetReturnValue ();			     // Sets the return register to zero
        child->CreateThreadStack (ForkStartFunction, 0);	// Make it ready for a later context switch
@@ -343,7 +346,8 @@ ExceptionHandler(ExceptionType which)
 	int j=prevNumVirtualPages;
 	for(int i=0;i<numSharedPages;i++){
 		newKernelPageTable[i+j].virtualPage = i+j;
-		newKernelPageTable[i+j].physicalPage = i+numPagesAllocated;
+		int newPage = (int)((machine->availablePages)->Remove());
+		newKernelPageTable[i+j].physicalPage = newPage;
 		newKernelPageTable[i+j].valid = TRUE;
 		newKernelPageTable[i+j].use = FALSE;
 		newKernelPageTable[i+j].dirty= FALSE;
@@ -369,26 +373,13 @@ ExceptionHandler(ExceptionType which)
         
         stats->numPageFaults++;
 
-	int vaddr = machine->ReadRegister(39);
+	int vaddr = machine->ReadRegister(BadVAddrReg);
         int vpn = vaddr/PageSize;//this page is to be written into mainmemory
-        int newPage = (int)((machine->availablePages)->Remove());
-        machine->KernelPageTable[vpn].physicalPage = newPage;
-        machine->KernelPageTable[vpn].valid = TRUE;
-        numPagesAllocated++;
-        //TODO need to read from executable
-        NoffHeader noffH;
-        executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
-        if ((noffH.noffMagic != NOFFMAGIC) && 
-              (WordToHost(noffH.noffMagic) == NOFFMAGIC))
-           SwapHeader(&noffH);
-        ASSERT(noffH.noffMagic == NOFFMAGIC);
-        bzero(&machine->mainMemory[newPage*PageSize], PageSize);
-
-        executable->ReadAt(&(machine->mainMemory[newPage * PageSize ]),
-              PageSize, noffH.code.inFileAddr + vpn*PageSize);
-
+	// handlePageFault
+	(currentThread->space)->handlePageFault(vpn);
+        
         //Put thread to sleep
-        currentThread->SortedInsertInWaitQueue(stats->TotalTicks);
+        currentThread->SortedInsertInWaitQueue(stats->totalTicks+1000);
     }
     else {
 	printf("Unexpected user mode exception %d %d\n", which, type);

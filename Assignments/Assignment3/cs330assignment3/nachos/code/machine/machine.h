@@ -25,6 +25,7 @@
 #include "utility.h"
 #include "translate.h"
 #include "disk.h"
+#include "list.h"
 
 // Definitions related to the size, and format of user memory
 

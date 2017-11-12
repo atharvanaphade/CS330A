@@ -60,8 +60,6 @@ SwapHeader (NoffHeader *noffH)
 ProcessAddressSpace::ProcessAddressSpace(OpenFile *executable)
 {
 
-    this->execFile = executable;
-
     NoffHeader noffH;
     unsigned int i, size;
     unsigned vpn, offset;
@@ -93,6 +91,7 @@ ProcessAddressSpace::ProcessAddressSpace(OpenFile *executable)
     for (i = 0; i < numVirtualPages; i++) {
 	KernelPageTable[i].virtualPage = i;
 	//KernelPageTable[i].physicalPage = i+numPagesAllocated; //No allocation of physical page
+	KernelPageTable[i].physicalPage = -1;
 	KernelPageTable[i].valid = FALSE;
 	KernelPageTable[i].use = FALSE;
 	KernelPageTable[i].dirty = FALSE;
@@ -157,6 +156,7 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace)
     for (i = 0; i < numVirtualPages; i++) {
         KernelPageTable[i].virtualPage = i;
         //KernelPageTable[i].physicalPage = i+numPagesAllocated;
+        KernelPageTable[i].physicalPage = -1;
         KernelPageTable[i].valid = parentPageTable[i].valid;
         KernelPageTable[i].use = parentPageTable[i].use;
         KernelPageTable[i].dirty = parentPageTable[i].dirty;
@@ -166,10 +166,11 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace)
         KernelPageTable[i].shared = parentPageTable[i].shared;
 	if (KernelPageTable[i].shared == TRUE ) {
 		KernelPageTable[i].physicalPage= parentPageTable[i].physicalPage;	
-	}else{
+	}
+	/*else{
         	KernelPageTable[i].physicalPage = curPages+numPagesAllocated;
 		curPages++;
-	}
+	}*/
     }
 
     // Copy the contents
@@ -186,6 +187,10 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace)
 	{
 	   continue;
 	}
+	
+	int newPage = (int)((machine->availablePages)->Remove());
+	KernelPageTable[i].physicalPage = newPage;
+	curPages++;
     	unsigned startAddrParent = parentPageTable[i].physicalPage*PageSize;
     	unsigned startAddrChild = KernelPageTable[i].physicalPage*PageSize;
 	for (unsigned j=0; j < PageSize; j++){
@@ -280,4 +285,24 @@ void
 ProcessAddressSpace::setKernelPageTable(TranslationEntry *ktable, unsigned int numV){
 	KernelPageTable=ktable;
 	numVirtualPages=numV;	
+}
+
+void
+ProcessAddressSpace::handlePageFault(int vpn){
+
+	OpenFile *executable = fileSystem->Open(execFile);
+	int newPage = (int)((machine->availablePages)->Remove());
+	machine->KernelPageTable[vpn].physicalPage = newPage;
+	machine->KernelPageTable[vpn].valid = TRUE;
+	numPagesAllocated++;
+	//TODO need to read from executable
+	NoffHeader noffH;
+	executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
+	if ((noffH.noffMagic != NOFFMAGIC) && 
+					(WordToHost(noffH.noffMagic) == NOFFMAGIC))
+			SwapHeader(&noffH);
+	ASSERT(noffH.noffMagic == NOFFMAGIC);
+	bzero(&machine->mainMemory[newPage*PageSize], PageSize);
+
+	executable->ReadAt(&(machine->mainMemory[newPage * PageSize ]),PageSize, noffH.code.inFileAddr + vpn*PageSize);
 }
