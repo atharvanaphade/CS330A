@@ -74,6 +74,12 @@ Machine::Machine(bool debug)
 
     singleStep = debug;
     CheckEndian();
+    //Creating list of available pages
+    availablePages = new List();
+    for(int i=0;i<NumPhysPages;i++)
+    {
+	availablePages.append((void *)i);
+    }
 }
 
 //----------------------------------------------------------------------

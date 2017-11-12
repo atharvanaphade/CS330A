@@ -186,6 +186,7 @@ class Machine {
 
     TranslationEntry *KernelPageTable;
     unsigned int KernelPageTableSize;
+    List *availablePages;
 
   private:
     bool singleStep;		// drop back into the debugger after each

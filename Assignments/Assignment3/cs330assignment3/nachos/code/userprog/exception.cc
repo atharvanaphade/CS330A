@@ -120,15 +120,34 @@ ExceptionHandler(ExceptionType which)
     else if ((which == SyscallException) && (type == SysCall_Exec)) {
        // Copy the executable name into kernel space
        vaddr = machine->ReadRegister(4);
-       machine->ReadMem(vaddr, 1, &memval);
+       while(machine->ReadMem(vaddr, 1, &memval) == FALSE)
+          continue;
+       //machine->ReadMem(vaddr, 1, &memval);
        i = 0;
        while ((*(char*)&memval) != '\0') {
           buffer[i] = (*(char*)&memval);
           i++;
           vaddr++;
-          machine->ReadMem(vaddr, 1, &memval);
+          while(machine->ReadMem(vaddr, 1, &memval) == FALSE)
+             continue;
+          //machine->ReadMem(vaddr, 1, &memval);
        }
        buffer[i] = (*(char*)&memval);
+       //Add all pages to availablePages queue but not shared pages
+       for(i = 0; i<machine->numVirtualPages; i++)
+       {
+          if(machine->KernelPageTable[i].shared == TRUE)
+             continue;
+          if(machine->KernelPageTable[i].valid == FALSE)
+             continue;
+          //is a valid non-shared page
+          //deallocate it
+          int phyPage = machine->KernelPageTable[i].physicalPage;
+          (machine->availablePages)->Append((void *)phyPage);
+       }
+       //delete the page table
+       delete [] machine->KernelPageTable;
+       
        LaunchUserProcess(buffer);
     }
     else if ((which == SyscallException) && (type == SysCall_Join)) {
@@ -214,12 +233,16 @@ ExceptionHandler(ExceptionType which)
     }
     else if ((which == SyscallException) && (type == SysCall_PrintString)) {
        vaddr = machine->ReadRegister(4);
-       machine->ReadMem(vaddr, 1, &memval);
+       while(machine->ReadMem(vaddr, 1, &memval) == FALSE)
+          continue;
+       //machine->ReadMem(vaddr, 1, &memval);
        while ((*(char*)&memval) != '\0') {
           writeDone->P() ;
           console->PutChar(*(char*)&memval);
           vaddr++;
-          machine->ReadMem(vaddr, 1, &memval);
+          while(machine->ReadMem(vaddr, 1, &memval) == FALSE)
+             continue;
+          //machine->ReadMem(vaddr, 1, &memval);
        }
        // Advance program counters.
        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
@@ -303,6 +326,7 @@ ExceptionHandler(ExceptionType which)
     } else if ((which == SyscallException) && (type == SysCall_ShmAllocate)){
 	int numSharedBytes = machine->ReadRegister(4);
 	int numSharedPages = (numSharedBytes+PageSize-1)/PageSize;
+        stats->numPageFaults += numSharedPages;
 	int prevNumVirtualPages = machine->KernelPageTableSize;
 	int newNumVirtualPages = numSharedPages+prevNumVirtualPages;
 	TranslationEntry *newKernelPageTable = new TranslationEntry[newNumVirtualPages];
@@ -341,7 +365,32 @@ ExceptionHandler(ExceptionType which)
        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
-    }else {
+    } else if(which == PageFaultException){
+        
+        stats->numPageFaults++;
+
+	int vaddr = machine->ReadRegister(39);
+        int vpn = vaddr/PageSize;//this page is to be written into mainmemory
+        int newPage = (int)((machine->availablePages)->Remove());
+        machine->KernelPageTable[vpn].physicalPage = newPage;
+        machine->KernelPageTable[vpn].valid = TRUE;
+        numPagesAllocated++;
+        //TODO need to read from executable
+        NoffHeader noffH;
+        executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
+        if ((noffH.noffMagic != NOFFMAGIC) && 
+              (WordToHost(noffH.noffMagic) == NOFFMAGIC))
+           SwapHeader(&noffH);
+        ASSERT(noffH.noffMagic == NOFFMAGIC);
+        bzero(&machine->mainMemory[newPage*PageSize], PageSize);
+
+        executable->ReadAt(&(machine->mainMemory[newPage * PageSize ]),
+              PageSize, noffH.code.inFileAddr + vpn*PageSize);
+
+        //Put thread to sleep
+        currentThread->SortedInsertInWaitQueue(stats->TotalTicks);
+    }
+    else {
 	printf("Unexpected user mode exception %d %d\n", which, type);
 	ASSERT(FALSE);
     }
