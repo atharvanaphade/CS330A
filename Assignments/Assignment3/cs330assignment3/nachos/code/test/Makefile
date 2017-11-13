@@ -13,7 +13,7 @@
 # if you are cross-compiling, you need to point to the right executables
 # and change the flags to ld and the build procedure for as
 #GCCDIR = ~/gnu/local/decstation-ultrix/bin/
-GCCDIR = ~/cs330assignment3/mips-i386-xgcc/bin/
+GCCDIR = ~/Documents/CS330/CS330A/Assignments/Assignment3/cs330assignment3/mips-i386-xgcc/bin/
 LDFLAGS = -T script -N
 #ASFLAGS = -mips
 ASFLAGS =

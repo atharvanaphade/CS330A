@@ -24,7 +24,7 @@ class ProcessAddressSpace {
 					// initializing it with the program
 					// stored in the file "executable"
 
-    ProcessAddressSpace (ProcessAddressSpace *parentSpace);	// Used by fork
+    ProcessAddressSpace (ProcessAddressSpace *parentSpace, NachOSThread *child_thread);	// Used by fork
 
     ~ProcessAddressSpace();			// De-allocate an address space
 

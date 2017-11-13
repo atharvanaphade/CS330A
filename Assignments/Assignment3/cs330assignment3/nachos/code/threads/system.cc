@@ -36,6 +36,9 @@ int cpu_burst_start_time;        // Records the start of current CPU burst
 int completionTimeArray[MAX_THREAD_COUNT];        // Records the completion time of all simulated threads
 bool excludeMainThread;		// Used by completion time statistics calculation
 
+int pagetoVPN[NumPhysPages];
+NachOSThread *pagetothread[NumPhysPages];
+
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
 #endif
@@ -132,6 +135,11 @@ Initialize(int argc, char **argv)
 
     for (i=0; i<MAX_THREAD_COUNT; i++) { threadArray[i] = NULL; exitThreadArray[i] = false; completionTimeArray[i] = -1; }
     thread_index = 0;
+
+    for (i=0; i<NumPhysPages; i++){
+        pagetoVPN[i] = -1;
+        pagetothread[i] = NULL;
+    }
 
     sleepQueueHead = NULL;
 
