@@ -180,7 +180,7 @@ ExceptionHandler(ExceptionType which)
        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
        
        child = new NachOSThread("Forked thread", GET_NICE_FROM_PARENT);
-       child->space = new ProcessAddressSpace (currentThread->space, child);  // Duplicates the address space
+       child->space = new ProcessAddressSpace (currentThread->space, child->GetPID());  // Duplicates the address space
        (child->space)->execFile=(currentThread->space)->execFile;
        child->SaveUserState ();		     		      // Duplicate the register set
        child->ResetReturnValue ();			     // Sets the return register to zero
@@ -321,6 +321,7 @@ ExceptionHandler(ExceptionType which)
        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
     else if ((which == SyscallException) && (type == SysCall_NumInstr)) {
+        printf("In Num Instr, numPagesAllocated: %d\n",numPagesAllocated);
        machine->WriteRegister(2, currentThread->GetInstructionCount());
        // Advance program counters.
        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
@@ -370,7 +371,7 @@ ExceptionHandler(ExceptionType which)
        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     } else if(which == PageFaultException){
-        
+        printf("In page fault, numPagesAllocated: %d\n",numPagesAllocated);
         stats->numPageFaults++;
 
 	int vaddr = machine->ReadRegister(BadVAddrReg);
@@ -378,8 +379,8 @@ ExceptionHandler(ExceptionType which)
 	// handlePageFault
 	(currentThread->space)->handlePageFault(vpn);
         
-    //Put thread to sleep
-    currentThread->SortedInsertInWaitQueue(stats->totalTicks+1000);
+        //Put thread to sleep
+        currentThread->SortedInsertInWaitQueue(stats->totalTicks+1000);
     }
     else {
 	printf("Unexpected user mode exception %d %d\n", which, type);

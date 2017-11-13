@@ -19,7 +19,6 @@
 #include "system.h"
 #include "addrspace.h"
 #include "noff.h"
-
 //----------------------------------------------------------------------
 // SwapHeader
 // 	Do little endian to big endian conversion on the bytes in the 
@@ -78,8 +77,8 @@ ProcessAddressSpace::ProcessAddressSpace(OpenFile *executable)
 						// to leave room for the stack
     numVirtualPages = divRoundUp(size, PageSize);
     size = numVirtualPages * PageSize;
-
-    ASSERT(numVirtualPages+numPagesAllocated <= NumPhysPages);		// check we're not trying
+    backup_mem = new char[size];
+    //ASSERT(numVirtualPages+numPagesAllocated <= NumPhysPages);		// check we're not trying
 										// to run anything too big --
 										// at least until we have
 										// virtual memory
@@ -138,12 +137,13 @@ ProcessAddressSpace::ProcessAddressSpace(OpenFile *executable)
 //      We need to duplicate the address space of the parent.
 //----------------------------------------------------------------------
 
-ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace, NachOSThread *child_thread)
+ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int child_pid )
 {
+    NachOSThread *child_thread = threadArray[child_pid];
     numVirtualPages = parentSpace->GetNumPages();
     unsigned i, size = numVirtualPages * PageSize;
 
-    ASSERT(numVirtualPages+numPagesAllocated <= NumPhysPages);                // check we're not trying
+    //ASSERT(numVirtualPages+numPagesAllocated <= NumPhysPages);                // check we're not trying
                                                                                 // to run anything too big --
                                                                                 // at least until we have
                                                                                 // virtual memory
@@ -190,7 +190,7 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace, NachO
 		if(KernelPageTable[i].backup == TRUE){
 		   // COPY PARENT BACKUP TO CHILD
 		   for(int j=0;j<PageSize;j++){
-		      child->backup_mem[i*PageSize+j] = currentThead->backup_mem[i* PageSize + j ];
+		      backup_mem[i*PageSize+j] = parentSpace->backup_mem[i* PageSize + j ];
 		   }
 		}
 	   continue;
@@ -198,7 +198,7 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace, NachO
 	int newPage;
 	if(numPagesAllocated<NumPhysPages){
 		newPage = (int)((machine->availablePages)->Remove());
-		NumPhysPages++;
+		numPagesAllocated++;
 	}
 	else{
 		do{
@@ -208,6 +208,11 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace, NachO
 		NachOSThread *old_thread = pagetothread[newPage];
 		TranslationEntry *old_table = old_thread->space->GetPageTable();
 		old_table[vpn_old].valid = FALSE;
+		if(old_table[vpn_old].dirty==TRUE){
+			for(int i=0; i<PageSize;i++){
+				(old_thread->space)->backup_mem[vpn*PageSize+i] = machine->mainMemory[newPage * PageSize + i ];
+			}
+		}
 	}
 	pagetoVPN[newPage] = i;
 	pagetothread[newPage] = child_thread;
@@ -311,10 +316,10 @@ ProcessAddressSpace::setKernelPageTable(TranslationEntry *ktable, unsigned int n
 
 void
 ProcessAddressSpace::handlePageFault(int vpn){
-
+	int newPage;
 	OpenFile *executable = fileSystem->Open(execFile);
 	if(numPagesAllocated<NumPhysPages){
-		int newPage = (int)((machine->availablePages)->Remove());
+		newPage = (int)((machine->availablePages)->Remove());
 		pagetoVPN[newPage] = vpn;
 		pagetothread[newPage] = currentThread;
 		machine->KernelPageTable[vpn].physicalPage = newPage;
@@ -322,14 +327,14 @@ ProcessAddressSpace::handlePageFault(int vpn){
 		numPagesAllocated++;
 	}
 	else {
-		int newPage = Random()%NumPhysPages;
+		newPage = Random()%NumPhysPages;
 		int vpn_old = pagetoVPN[newPage];
 		NachOSThread *old_thread = pagetothread[newPage];
-		TranslationEntry *old_table = old_thread->space->GetPageTable();
+		TranslationEntry *old_table = (old_thread->space)->GetPageTable();
 		old_table[vpn_old].valid = FALSE;
 		if(old_table[vpn_old].dirty==TRUE){
 			for(int i=0; i<PageSize;i++){
-				old_thread->backup_mem[vpn*PageSize+i] = machine->mainMemory[newPage * PageSize + i ];
+				(old_thread->space)->backup_mem[vpn*PageSize+i] = machine->mainMemory[newPage * PageSize + i ];
 			}
 		}
 		pagetoVPN[newPage] = vpn;
@@ -352,7 +357,7 @@ ProcessAddressSpace::handlePageFault(int vpn){
 	else{
 	   //READ from backup
 	   for(int i=0;i<PageSize;i++){
-	      machine->mainMemory[newPage * PageSize + i ] = currentThread->backup_mem[vpn*PageSize+i];
+	      machine->mainMemory[newPage * PageSize + i ] = (currentThread->space)->backup_mem[vpn*PageSize+i];
 	   }
 	}
 }
