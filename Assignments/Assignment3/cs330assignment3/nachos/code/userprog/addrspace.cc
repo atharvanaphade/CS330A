@@ -321,10 +321,6 @@ ProcessAddressSpace::handlePageFault(int vpn){
 	OpenFile *executable = fileSystem->Open(execFile);
 	if(numPagesAllocated<NumPhysPages){
 		newPage = (int)((machine->availablePages)->Remove());
-		pagetoVPN[newPage] = vpn;
-		pagetothread[newPage] = currentThread;
-		machine->KernelPageTable[vpn].physicalPage = newPage;
-		machine->KernelPageTable[vpn].valid = TRUE;
 		numPagesAllocated++;
 	}
 	else {
@@ -339,11 +335,12 @@ ProcessAddressSpace::handlePageFault(int vpn){
 			}
 			old_table[vpn_old].backup = TRUE;
 		}
-		pagetoVPN[newPage] = vpn;
-		pagetothread[newPage] = currentThread;
-		machine->KernelPageTable[vpn].physicalPage = newPage;
-		machine->KernelPageTable[vpn].valid = TRUE;
 	}
+	pagetoVPN[newPage] = vpn;
+	pagetothread[newPage] = currentThread;
+	machine->KernelPageTable[vpn].physicalPage = newPage;
+	machine->KernelPageTable[vpn].valid = TRUE;
+	machine->KernelPageTable[vpn].dirty = FALSE;
 	if(machine->KernelPageTable[vpn].backup==FALSE){
 	   //TODO need to read from executable
 	   NoffHeader noffH;
@@ -362,5 +359,6 @@ ProcessAddressSpace::handlePageFault(int vpn){
 	      machine->mainMemory[newPage * PageSize + i ] = (currentThread->space)->backup_mem[vpn*PageSize+i];
 	   }
 	}
+	
 }
 
