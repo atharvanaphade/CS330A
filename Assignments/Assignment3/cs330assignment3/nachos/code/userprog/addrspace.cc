@@ -209,9 +209,10 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int ch
 		TranslationEntry *old_table = old_thread->space->GetPageTable();
 		old_table[vpn_old].valid = FALSE;
 		if(old_table[vpn_old].dirty==TRUE){
-			for(int i=0; i<PageSize;i++){
-				(old_thread->space)->backup_mem[vpn*PageSize+i] = machine->mainMemory[newPage * PageSize + i ];
+			for(int j=0; j<PageSize;j++){
+				(old_thread->space)->backup_mem[vpn_old*PageSize+j] = machine->mainMemory[newPage * PageSize + j ];
 			}
+			old_table[vpn_old].backup = TRUE;
 		}
 	}
 	pagetoVPN[newPage] = i;
@@ -333,9 +334,10 @@ ProcessAddressSpace::handlePageFault(int vpn){
 		TranslationEntry *old_table = (old_thread->space)->GetPageTable();
 		old_table[vpn_old].valid = FALSE;
 		if(old_table[vpn_old].dirty==TRUE){
-			for(int i=0; i<PageSize;i++){
-				(old_thread->space)->backup_mem[vpn*PageSize+i] = machine->mainMemory[newPage * PageSize + i ];
+			for(int j=0; j<PageSize;j++){
+				(old_thread->space)->backup_mem[vpn_old*PageSize+j] = machine->mainMemory[newPage * PageSize + j ];
 			}
+			old_table[vpn_old].backup = TRUE;
 		}
 		pagetoVPN[newPage] = vpn;
 		pagetothread[newPage] = currentThread;
