@@ -62,9 +62,12 @@ extern int cpu_burst_start_time;	// Records the start of current CPU burst
 extern int completionTimeArray[];	// Records the completion time of all simulated threads
 extern bool excludeMainThread;		// Used by completion time statistics calculation
 
+extern int PageAlgo;
 extern int pagetoVPN[];
 extern bool pagetoShared[];
 extern NachOSThread *pagetothread[];
+
+extern List *FIFOlist;
 
 class TimeSortedWaitQueue {		// Needed to implement syscall_wrapper_Sleep
 private:

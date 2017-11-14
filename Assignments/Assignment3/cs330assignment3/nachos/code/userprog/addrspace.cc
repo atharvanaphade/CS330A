@@ -199,20 +199,31 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int ch
 		numPagesAllocated++;
 	}
 	else{
-		do{
-		newPage = Random()%NumPhysPages;
-		}while(newPage==parentPageTable[i].physicalPage||pagetoShared[newPage]==TRUE);
+		if(PageAlgo==1){
+			do{
+			newPage = Random()%NumPhysPages;
+			}while(newPage==parentPageTable[i].physicalPage||pagetoShared[newPage]==TRUE);
+		}
+		else if(PageAlgo==2){
+			newPage = (int)FIFOlist->Remove();
+		}
+		// DEBUG('a',"REPLACEMENT");
 		int vpn_old = pagetoVPN[newPage];
+		// DEBUG('a',"vpn_old:%d",vpn_old);
+		printf("vpn_old:%d\n", vpn_old);
 		NachOSThread *old_thread = pagetothread[newPage];
-		TranslationEntry *old_table = old_thread->space->GetPageTable();
+		TranslationEntry *old_table = (old_thread->space)->GetPageTable();
 		old_table[vpn_old].valid = FALSE;
 		if(old_table[vpn_old].dirty==TRUE){
+			// DEBUG('a',"Backup");
 			for(int j=0; j<PageSize;j++){
 				(old_thread->space)->backup_mem[vpn_old*PageSize+j] = machine->mainMemory[newPage * PageSize + j ];
 			}
 			old_table[vpn_old].backup = TRUE;
 		}
 	}
+	if(newPage!=parentPageTable[i].physicalPage && pagetoShared[newPage]==FALSE)
+		FIFOlist->Append((void *)newPage);
 	pagetoVPN[newPage] = i;
 	pagetothread[newPage] = child_thread;
 	KernelPageTable[i].physicalPage = newPage;
@@ -323,10 +334,15 @@ ProcessAddressSpace::handlePageFault(int vpn){
 		numPagesAllocated++;
 	}
 	else {
-		do{
-		printf("ELSE\n");
-		newPage = Random()%NumPhysPages;
-		}while(pagetoShared[newPage]==TRUE);
+		if(PageAlgo==1){
+			do{
+			printf("ELSE\n");
+			newPage = Random()%NumPhysPages;
+			}while(pagetoShared[newPage]==TRUE);	
+		}
+		else if(PageAlgo==2){
+			newPage = (int)FIFOlist->Remove();
+		}
 		// DEBUG('a',"REPLACEMENT");
 		int vpn_old = pagetoVPN[newPage];
 		// DEBUG('a',"vpn_old:%d",vpn_old);
@@ -343,6 +359,9 @@ ProcessAddressSpace::handlePageFault(int vpn){
 		}
 	}
 	printf("newPage:%d\n", newPage);
+	if(pagetoShared[newPage]==FALSE){
+		FIFOlist->Append((void *)newPage);
+	}
 	// DEBUG('a',"newPage:%d", newPage);
 	pagetoVPN[newPage] = vpn;
 	pagetothread[newPage] = currentThread;
