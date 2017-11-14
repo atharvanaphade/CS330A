@@ -63,6 +63,7 @@ extern int completionTimeArray[];	// Records the completion time of all simulate
 extern bool excludeMainThread;		// Used by completion time statistics calculation
 
 extern int pagetoVPN[];
+extern bool pagetoShared[];
 extern NachOSThread *pagetothread[];
 
 class TimeSortedWaitQueue {		// Needed to implement syscall_wrapper_Sleep

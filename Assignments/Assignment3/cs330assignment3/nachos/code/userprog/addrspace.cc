@@ -64,7 +64,6 @@ ProcessAddressSpace::ProcessAddressSpace(OpenFile *executable)
     unsigned vpn, offset;
     TranslationEntry *entry;
     unsigned int pageFrame;
-
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) && 
 		(WordToHost(noffH.noffMagic) == NOFFMAGIC))
@@ -142,7 +141,6 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int ch
     NachOSThread *child_thread = threadArray[child_pid];
     numVirtualPages = parentSpace->GetNumPages();
     unsigned i, size = numVirtualPages * PageSize;
-
     //ASSERT(numVirtualPages+numPagesAllocated <= NumPhysPages);                // check we're not trying
                                                                                 // to run anything too big --
                                                                                 // at least until we have
@@ -203,7 +201,7 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int ch
 	else{
 		do{
 		newPage = Random()%NumPhysPages;
-		}while(newPage!=parentPageTable[i].physicalPage);
+		}while(newPage==parentPageTable[i].physicalPage||pagetoShared[newPage]==TRUE);
 		int vpn_old = pagetoVPN[newPage];
 		NachOSThread *old_thread = pagetothread[newPage];
 		TranslationEntry *old_table = old_thread->space->GetPageTable();
@@ -318,47 +316,64 @@ ProcessAddressSpace::setKernelPageTable(TranslationEntry *ktable, unsigned int n
 void
 ProcessAddressSpace::handlePageFault(int vpn){
 	int newPage;
-	OpenFile *executable = fileSystem->Open(execFile);
+	printf("FAULT: %d\n",numPagesAllocated);
 	if(numPagesAllocated<NumPhysPages){
+		printf("IF\n");
 		newPage = (int)((machine->availablePages)->Remove());
 		numPagesAllocated++;
 	}
 	else {
+		do{
+		printf("ELSE\n");
 		newPage = Random()%NumPhysPages;
+		}while(pagetoShared[newPage]==TRUE);
+		// DEBUG('a',"REPLACEMENT");
 		int vpn_old = pagetoVPN[newPage];
+		// DEBUG('a',"vpn_old:%d",vpn_old);
+		printf("vpn_old:%d\n", vpn_old);
 		NachOSThread *old_thread = pagetothread[newPage];
 		TranslationEntry *old_table = (old_thread->space)->GetPageTable();
 		old_table[vpn_old].valid = FALSE;
 		if(old_table[vpn_old].dirty==TRUE){
+			// DEBUG('a',"Backup");
 			for(int j=0; j<PageSize;j++){
 				(old_thread->space)->backup_mem[vpn_old*PageSize+j] = machine->mainMemory[newPage * PageSize + j ];
 			}
 			old_table[vpn_old].backup = TRUE;
 		}
 	}
+	printf("newPage:%d\n", newPage);
+	// DEBUG('a',"newPage:%d", newPage);
 	pagetoVPN[newPage] = vpn;
 	pagetothread[newPage] = currentThread;
 	machine->KernelPageTable[vpn].physicalPage = newPage;
 	machine->KernelPageTable[vpn].valid = TRUE;
 	machine->KernelPageTable[vpn].dirty = FALSE;
 	if(machine->KernelPageTable[vpn].backup==FALSE){
+		printf("executable\n");
 	   //TODO need to read from executable
-	   NoffHeader noffH;
-	   executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
-	   if ((noffH.noffMagic != NOFFMAGIC) && 
-		 (WordToHost(noffH.noffMagic) == NOFFMAGIC))
-	      SwapHeader(&noffH);
-	   ASSERT(noffH.noffMagic == NOFFMAGIC);
-	   bzero(&machine->mainMemory[newPage*PageSize], PageSize);
+		// OpenFile *executable = fileSystem->Open(execFile);
+		if (executableVar == NULL) {
+			printf("Empty file\n");
+			ASSERT(false);
+		}
+		NoffHeader noffH;
+		executableVar->ReadAt((char *)&noffH, sizeof(noffH), 0);
+		if ((noffH.noffMagic != NOFFMAGIC) && 
+			(WordToHost(noffH.noffMagic) == NOFFMAGIC))
+			SwapHeader(&noffH);
+		ASSERT(noffH.noffMagic == NOFFMAGIC);
+		bzero(&machine->mainMemory[newPage*PageSize], PageSize);
 
-	   executable->ReadAt(&(machine->mainMemory[newPage * PageSize ]),PageSize, noffH.code.inFileAddr + vpn*PageSize);
+		executableVar->ReadAt(&(machine->mainMemory[newPage * PageSize ]),PageSize, noffH.code.inFileAddr + vpn*PageSize);
 	}
 	else{
+		printf("backup\n");
 	   //READ from backup
 	   for(int i=0;i<PageSize;i++){
 	      machine->mainMemory[newPage * PageSize + i ] = (currentThread->space)->backup_mem[vpn*PageSize+i];
 	   }
 	}
-	
+	printf("DONE\n");
 }
 

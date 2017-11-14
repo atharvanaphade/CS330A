@@ -40,6 +40,7 @@ LaunchUserProcess(char *filename)
     }
     space = new ProcessAddressSpace(executable);    
     space->execFile=filename;
+    space->executableVar = fileSystem->Open(space->execFile);
     currentThread->space = space;
 
     delete executable;			// close file

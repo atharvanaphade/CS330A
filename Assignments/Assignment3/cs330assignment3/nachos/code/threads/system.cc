@@ -37,6 +37,7 @@ int completionTimeArray[MAX_THREAD_COUNT];        // Records the completion time
 bool excludeMainThread;		// Used by completion time statistics calculation
 
 int pagetoVPN[NumPhysPages];
+bool pagetoShared[NumPhysPages];
 NachOSThread *pagetothread[NumPhysPages];
 
 #ifdef FILESYS_NEEDED
@@ -139,6 +140,7 @@ Initialize(int argc, char **argv)
     for (i=0; i<NumPhysPages; i++){
         pagetoVPN[i] = -1;
         pagetothread[i] = NULL;
+        pagetoShared[i] = FALSE;
     }
 
     sleepQueueHead = NULL;

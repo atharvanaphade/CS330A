@@ -146,6 +146,7 @@ ExceptionHandler(ExceptionType which)
           //deallocate it
           int phyPage = machine->KernelPageTable[i].physicalPage;
           (machine->availablePages)->Append((void *)phyPage);
+          numPagesAllocated--;
        }
        //delete the page table
        delete [] machine->KernelPageTable;
@@ -182,6 +183,7 @@ ExceptionHandler(ExceptionType which)
        child = new NachOSThread("Forked thread", GET_NICE_FROM_PARENT);
        child->space = new ProcessAddressSpace (currentThread->space, child->GetPID());  // Duplicates the address space
        (child->space)->execFile=(currentThread->space)->execFile;
+       (child->space)->executableVar = fileSystem->Open((child->space)->execFile);
        child->SaveUserState ();		     		      // Duplicate the register set
        child->ResetReturnValue ();			     // Sets the return register to zero
        child->CreateThreadStack (ForkStartFunction, 0);	// Make it ready for a later context switch
@@ -347,7 +349,8 @@ ExceptionHandler(ExceptionType which)
 	int j=prevNumVirtualPages;
 	for(int i=0;i<numSharedPages;i++){
 		newKernelPageTable[i+j].virtualPage = i+j;
-		int newPage = (int)((machine->availablePages)->Remove());
+        int newPage = (int)((machine->availablePages)->Remove());
+        pagetoShared[newPage] = TRUE;
 		newKernelPageTable[i+j].physicalPage = newPage;
 		newKernelPageTable[i+j].valid = TRUE;
 		newKernelPageTable[i+j].use = FALSE;
@@ -367,18 +370,18 @@ ExceptionHandler(ExceptionType which)
 	// return starting virtual address of the shared memory
 	machine->WriteRegister(2,prevNumVirtualPages*PageSize);
        // Advance program counters.
-       machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
-       machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
-       machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
+    machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+    machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+    machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     } else if(which == PageFaultException){
         printf("In page fault, numPagesAllocated: %d\n",numPagesAllocated);
         stats->numPageFaults++;
 
-	int vaddr = machine->ReadRegister(BadVAddrReg);
+        int vaddr = machine->ReadRegister(BadVAddrReg);
         int vpn = vaddr/PageSize;//this page is to be written into mainmemory
-	// handlePageFault
-	(currentThread->space)->handlePageFault(vpn);
-        
+        // handlePageFault
+        (currentThread->space)->handlePageFault(vpn);
+            
         //Put thread to sleep
         currentThread->SortedInsertInWaitQueue(stats->totalTicks+1000);
     }

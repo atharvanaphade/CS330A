@@ -39,6 +39,7 @@ class ProcessAddressSpace {
     
     void setKernelPageTable(TranslationEntry *ktable, unsigned int numV);
     char *execFile;
+    OpenFile *executableVar;
     void handlePageFault(int vpn);
     char *backup_mem;
   private:
