@@ -41,6 +41,11 @@ extern void Initialize(int argc, char **argv); 	// Initialization,
 extern void Cleanup();				// Cleanup, called when
 						// Nachos is done.
 
+extern int FIFO[NumPhysPages];
+extern int LRU[NumPhysPages];
+extern int LRUCLOCK[NumPhysPages];
+extern int LRUptr;
+
 extern NachOSThread *currentThread;			// the thread holding the CPU
 extern NachOSThread *threadToBeDestroyed;  		// the thread that just finished
 extern ProcessScheduler *scheduler;			// the ready list

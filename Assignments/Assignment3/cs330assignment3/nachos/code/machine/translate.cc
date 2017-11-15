@@ -117,6 +117,9 @@ Machine::ReadMem(int addr, int size, int *value)
       default: ASSERT(FALSE);
     }
     
+    int newPage = (physicalAddress/PageSize);
+    LRU[newPage] = stats->totalTicks;
+    LRUCLOCK[newPage] = 1;
     DEBUG('a', "\tvalue read = %8.8x\n", *value);
     return (TRUE);
 }
@@ -164,7 +167,9 @@ Machine::WriteMem(int addr, int size, int value)
 	
       default: ASSERT(FALSE);
     }
-    
+    int newPage = (physicalAddress/PageSize);
+    LRU[newPage] = stats->totalTicks;
+    LRUCLOCK[newPage] = 1;
     return TRUE;
 }
 

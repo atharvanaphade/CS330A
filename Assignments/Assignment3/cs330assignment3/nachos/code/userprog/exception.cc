@@ -349,8 +349,30 @@ ExceptionHandler(ExceptionType which)
 	int j=prevNumVirtualPages;
 	for(int i=0;i<numSharedPages;i++){
 		newKernelPageTable[i+j].virtualPage = i+j;
-        int newPage = (int)((machine->availablePages)->Remove());
-        pagetoShared[newPage] = TRUE;
+		int newPage;
+		if(!((machine->availablePages)->IsEmpty())){
+			newPage =  (int)((machine->availablePages)->Remove());
+		}
+		else {
+			//use page replacement algorithm
+			newPage = getNewPage(-1);	
+			//update vpn to thread and vpn to phy page and backup
+			int vpn_old = pagetoVPN[newPage];
+			ASSERT(vpn_old != -1);
+			NachOSThread *old_thread = pagetothread[newPage];
+			TranslationEntry *old_table = (old_thread->space)->GetPageTable();
+			old_table[vpn_old].valid = FALSE;
+			if(old_table[vpn_old].dirty==TRUE){
+				// DEBUG('a',"Backup");
+				for(int j=0; j<PageSize;j++){
+					(old_thread->space)->backup_mem[vpn_old*PageSize+j] = machine->mainMemory[newPage * PageSize + j ];
+				}
+				old_table[vpn_old].backup = TRUE;
+			}
+		}
+		pagetoVPN[newPage] = i+j;
+		pagetothread[newPage] = currentThread;
+		pagetoShared[newPage] = TRUE;
 		newKernelPageTable[i+j].physicalPage = newPage;
 		newKernelPageTable[i+j].valid = TRUE;
 		newKernelPageTable[i+j].use = FALSE;

@@ -41,7 +41,11 @@ int pagetoVPN[NumPhysPages];
 bool pagetoShared[NumPhysPages];
 NachOSThread *pagetothread[NumPhysPages];
 
-List *FIFOlist;
+//For all the 3 paging algorithms
+int FIFO[NumPhysPages];
+int LRU[NumPhysPages];
+int LRUCLOCK[NumPhysPages];
+int LRUptr;
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -137,7 +141,14 @@ Initialize(int argc, char **argv)
     
     excludeMainThread = FALSE;
 
-    FIFOlist = new List();
+    //FIFOlist = new List();
+    for(i=0;i<NumPhysPages ; i++)
+    {
+	FIFO[i]=0;
+	LRU[i]=0;
+	LRUCLOCK[i]=0;
+    }
+    LRUptr=0;
 
     for (i=0; i<MAX_THREAD_COUNT; i++) { threadArray[i] = NULL; exitThreadArray[i] = false; completionTimeArray[i] = -1; }
     thread_index = 0;

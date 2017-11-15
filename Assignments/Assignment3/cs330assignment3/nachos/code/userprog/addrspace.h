@@ -17,6 +17,8 @@
 #include "filesys.h"
 #define UserStackSize		1024 	// increase this as necessary!
 
+extern int getNewPage(int parentPage);
+
 class ProcessAddressSpace {
   public:
     ProcessAddressSpace(OpenFile *executable);	// Create an address space,
