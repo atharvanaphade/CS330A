@@ -96,6 +96,9 @@ NachOSThread::~NachOSThread()
 {
     DEBUG('t', "Deleting thread \"%s\"\n", name);
 
+    if(this->space != NULL){
+	delete this->space;
+    }
     ASSERT(this != currentThread);
     if (stack != NULL)
 	DeallocBoundedArray((char *) stack, StackSize * sizeof(int));

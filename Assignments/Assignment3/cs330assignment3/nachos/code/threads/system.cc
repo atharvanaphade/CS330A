@@ -146,7 +146,7 @@ Initialize(int argc, char **argv)
     {
 	FIFO[i]=0;
 	LRU[i]=0;
-	LRUCLOCK[i]=0;
+	LRUCLOCK[i]=1;
     }
     LRUptr=0;
 

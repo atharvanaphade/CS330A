@@ -146,6 +146,8 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int ch
 	// at least until we have
 	// virtual memory
 
+	backup_mem = new char[size];
+
 	DEBUG('a', "Initializing address space, num pages %d, size %d\n",
 			numVirtualPages, size);
 	// first, set up the translation
@@ -179,6 +181,7 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int ch
 	  for (i=0; i<size; i++) {
 	  machine->mainMemory[startAddrChild+i] = machine->mainMemory[startAddrParent+i];
 	  }*/
+	printf("START FORK LOOP\n");
 	for (i = 0; i < numVirtualPages; i++){
 		if(KernelPageTable[i].shared == TRUE ) {
 			continue;
@@ -194,30 +197,35 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int ch
 			continue;
 		}
 		int newPage;
+		printf("ALLOCATING PAGE FROM FORK \n");
 		if(!((machine->availablePages)->IsEmpty())){
+		//if(numPagesAllocated < NumPhysPages){
+			printf("TAKING from available\n");
 			newPage = (int)((machine->availablePages)->Remove());
 			numPagesAllocated++;
-			FIFO[newPage] = stats->totalTicks;
-			LRU[newPage] = stats->totalTicks;
-			LRUCLOCK[newPage] = 1;
 		}
 		else{
-			/*
-			   if(PageAlgo==1){
-			   do{
-			   newPage = Random()%NumPhysPages;
-			   }while(newPage==parentPageTable[i].physicalPage||pagetoShared[newPage]==TRUE);
-			   }
-			   else if(PageAlgo==2){
-			   newPage = (int)FIFOlist->Remove();
-			   }*/
+			
+			/*if(PageAlgo==1){
+				do{
+					newPage = Random()%NumPhysPages;
+				}while(newPage==parentPageTable[i].physicalPage||pagetoShared[newPage]==TRUE);
+			}
+			else if(PageAlgo==2){
+				//newPage = (int)FIFOlist->Remove();
+			}*/
 			newPage = getNewPage(parentPageTable[i].physicalPage);
 			// DEBUG('a',"REPLACEMENT");
 			int vpn_old = pagetoVPN[newPage];
 			// DEBUG('a',"vpn_old:%d",vpn_old);
-			printf("vpn_old:%d\n", vpn_old);
+			printf(" FROM FORK vpn_old:%d newPage: %d PID:%d\n", vpn_old,newPage, pagetothread[newPage]->GetPID());
 			NachOSThread *old_thread = pagetothread[newPage];
-			TranslationEntry *old_table = (old_thread->space)->GetPageTable();
+			TranslationEntry *old_table;
+			if(old_thread->GetPID() != child_pid){
+				old_table = (old_thread->space)->GetPageTable();
+			}else{
+				old_table = KernelPageTable;
+			}
 			old_table[vpn_old].valid = FALSE;
 			if(old_table[vpn_old].dirty==TRUE){
 				// DEBUG('a',"Backup");
@@ -227,6 +235,9 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int ch
 				old_table[vpn_old].backup = TRUE;
 			}
 		}
+		FIFO[newPage] = stats->totalTicks;
+		LRU[newPage] = stats->totalTicks;
+		LRUCLOCK[newPage] = 1;
 		//	if(newPage!=parentPageTable[i].physicalPage && pagetoShared[newPage]==FALSE)
 		//		FIFOlist->Append((void *)newPage);
 		pagetoVPN[newPage] = i;
@@ -239,6 +250,7 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int ch
 			machine->mainMemory[startAddrChild+j] = machine->mainMemory[startAddrParent+j];
 		}
 	}
+	printf("END FORK LOOP\n");
 
 	//numPagesAllocated += numVirtualPages;
 	//numPagesAllocated += curPages;
@@ -251,7 +263,19 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int ch
 
 ProcessAddressSpace::~ProcessAddressSpace()
 {
+	printf("In destructor\n");
+	for(int i=0;i<numVirtualPages;i++)
+	{
+		if(KernelPageTable[i].shared == TRUE || KernelPageTable[i].valid == FALSE)
+			continue;
+		// not a shared page
+		// deallocate it
+		int physPage = KernelPageTable[i].physicalPage;
+		(machine->availablePages)->Append((void *)physPage);
+	}
 	delete KernelPageTable;
+	delete backup_mem;
+	printf("END destructor\n");
 }
 
 //----------------------------------------------------------------------
@@ -343,6 +367,7 @@ int getNewPage(int parentPage)
 		int minidx = -1;
 		for(int i=0;i<NumPhysPages;i++)
 		{
+			//printf("------------------------------ %d FIFO: %d\n",i,FIFO[i]);
 			if(pagetoShared[i] == TRUE)
 				continue;
 			if(i == parentPage) continue;
@@ -366,7 +391,7 @@ int getNewPage(int parentPage)
 			if(i == parentPage) continue;
 			if(LRU[i] < mintime)
 			{
-				mintime = FIFO[i];
+				mintime = LRU[i];
 				minidx = i;
 			}
 		}		
@@ -379,84 +404,58 @@ int getNewPage(int parentPage)
 			LRUptr = (LRUptr+1)%NumPhysPages;
 		}
 		newPage = LRUptr;
-		/*int mintime = 1e9;
-		int minidx = -1;
-		int LRUflag = 1;
-		for(int i=0;i<NumPhysPages;i++)
-		{
-			if(pagetoShared[i] == TRUE)
-				continue;
-			if(i == parentPage) continue;
-			if(LRUCLOCK[i] < LRUflag)
-			{
-				mintime = FIFO[i];
-				minidx = i;
-				LRUflag = 0; 
-			}	
-		}		
-		if(LRUflag == 0)
-		newPage = minidx;
-		else {
-			//all are 1
-			//use FIFO
-			mintime = 1e9;
-			minidx = -1;
-			for(int i=0;i<NumPhysPages;i++)
-			{
-				if(pagetoShared[i] == TRUE)
-					continue;
-				if(i == parentPage) continue;
-				if(FIFO[i] < mintime)
-				{
-					mintime = FIFO[i];
-					minidx = i;
-				}	
-			}
-			newPage = minidx;
-		}*/
 	}
 	return newPage;
 }
 void
 ProcessAddressSpace::handlePageFault(int vpn){
 	int newPage;
+	printf("ALLOCATING PAGE FROM HANDLE\n");
 	printf("FAULT: %d\n",numPagesAllocated);
 	if(!((machine->availablePages)->IsEmpty())){
+	//if(numPagesAllocated < NumPhysPages){
 		printf("IF\n");
 		newPage = (int)((machine->availablePages)->Remove());
-		FIFO[newPage] = stats->totalTicks;
-		LRU[newPage] = stats->totalTicks;
-		LRUCLOCK[newPage] = 1;
 		numPagesAllocated++;
 	}
 	else {
-		/*
-		   if(PageAlgo==1){
-		   do{
-		   printf("ELSE\n");
-		   newPage = Random()%NumPhysPages;
-		   }while(pagetoShared[newPage]==TRUE);	
+		
+		   /*if(PageAlgo==1){
+			   do{
+				   printf("ELSE\n");
+				   newPage = Random()%NumPhysPages;
+			   }while(pagetoShared[newPage]==TRUE);	
 		   }
 		   else if(PageAlgo==2){
-		   newPage = (int)FIFOlist->Remove();
+			   //newPage = (int)FIFOlist->Remove();
 		   }*/
 		newPage = getNewPage(-1);
 		// DEBUG('a',"REPLACEMENT");
 		int vpn_old = pagetoVPN[newPage];
 		// DEBUG('a',"vpn_old:%d",vpn_old);
-		printf("vpn_old:%d\n", vpn_old);
+		printf("vpn_old:%d newpage: %d\n", vpn_old, newPage);
 		NachOSThread *old_thread = pagetothread[newPage];
+		printf("vpn_old:%d PID: %d\n", vpn_old,old_thread->GetPID());
+		printf("vpn_old:%d newPID: %d\n", vpn_old,currentThread->GetPID());
+		
 		TranslationEntry *old_table = (old_thread->space)->GetPageTable();
 		old_table[vpn_old].valid = FALSE;
 		if(old_table[vpn_old].dirty==TRUE){
 			// DEBUG('a',"Backup");
 			for(int j=0; j<PageSize;j++){
+				//printf("char bit:%d\n", j);
+				//printf("PID of old: %d\n",old_thread->GetPID());
+				//printf("size of old backup: %d\n",sizeof((old_thread->space)->backup_mem));
 				(old_thread->space)->backup_mem[vpn_old*PageSize+j] = machine->mainMemory[newPage * PageSize + j ];
+				//printf("char bit:%d\n", j);
 			}
 			old_table[vpn_old].backup = TRUE;
 		}
 	}
-	printf("newPage:%d\n", newPage);
+	FIFO[newPage] = stats->totalTicks;
+	LRU[newPage] = stats->totalTicks;
+	LRUCLOCK[newPage] = 1;
+	printf("newPage:%d vpn: %d\n", newPage,vpn);
 	/*
 	   if(pagetoShared[newPage]==FALSE){
 	   FIFOlist->Append((void *)newPage);
