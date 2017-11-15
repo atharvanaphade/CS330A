@@ -396,7 +396,7 @@ ExceptionHandler(ExceptionType which)
     machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
     machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     } else if(which == PageFaultException){
-        printf("In page fault, numPagesAllocated: %d\n",numPagesAllocated);
+        printf("In page fault, numPageFaults %d\n",stats->numPageFaults);
         stats->numPageFaults++;
 
         int vaddr = machine->ReadRegister(BadVAddrReg);

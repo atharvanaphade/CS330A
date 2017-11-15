@@ -197,12 +197,15 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int ch
 			continue;
 		}
 		int newPage;
-		printf("ALLOCATING PAGE FROM FORK \n");
+		//printf("ALLOCATING PAGE FROM FORK \n");
 		if(!((machine->availablePages)->IsEmpty())){
 		//if(numPagesAllocated < NumPhysPages){
-			printf("TAKING from available\n");
+			//printf("TAKING from available\n");
 			newPage = (int)((machine->availablePages)->Remove());
 			numPagesAllocated++;
+			printf("new pid: %d\n",child_pid);	
+			printf("newPyhPage: %d\n",newPage);
+			printf("new VPN: %d\n",i);
 		}
 		else{
 			
@@ -218,7 +221,7 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int ch
 			// DEBUG('a',"REPLACEMENT");
 			int vpn_old = pagetoVPN[newPage];
 			// DEBUG('a',"vpn_old:%d",vpn_old);
-			printf(" FROM FORK vpn_old:%d newPage: %d PID:%d\n", vpn_old,newPage, pagetothread[newPage]->GetPID());
+			//printf(" FROM FORK vpn_old:%d newPage: %d PID:%d\n", vpn_old,newPage, pagetothread[newPage]->GetPID());
 			NachOSThread *old_thread = pagetothread[newPage];
 			TranslationEntry *old_table;
 			if(old_thread->GetPID() != child_pid){
@@ -234,6 +237,11 @@ ProcessAddressSpace::ProcessAddressSpace(ProcessAddressSpace *parentSpace,int ch
 				}
 				old_table[vpn_old].backup = TRUE;
 			}
+			printf("old vpn: %d\n",vpn_old);	
+			printf("old pid: %d\n",old_thread->GetPID());	
+			printf("new pid: %d\n",currentThread->GetPID());	
+			printf("newPyhPage: %d\n",newPage);
+			printf("new VPN: %d\n",i);
 		}
 		FIFO[newPage] = stats->totalTicks;
 		LRU[newPage] = stats->totalTicks;
@@ -358,7 +366,7 @@ int getNewPage(int parentPage)
 	int newPage;
 	if(PageAlgo==1){
 		do{
-			printf("ELSE\n");
+			//printf("ELSE\n");
 			newPage = Random()%NumPhysPages;
 		}while(newPage == parentPage || pagetoShared[newPage]==TRUE);	
 	}
@@ -411,12 +419,15 @@ void
 ProcessAddressSpace::handlePageFault(int vpn){
 	int newPage;
 	printf("ALLOCATING PAGE FROM HANDLE\n");
-	printf("FAULT: %d\n",numPagesAllocated);
+	//printf("FAULT: %d\n",numPagesAllocated);
 	if(!((machine->availablePages)->IsEmpty())){
 	//if(numPagesAllocated < NumPhysPages){
-		printf("IF\n");
+		//printf("IF\n");
 		newPage = (int)((machine->availablePages)->Remove());
 		numPagesAllocated++;
+		printf("new pid: %d\n",currentThread->GetPID());	
+		printf("Newly Available pyhPage: %d\n",newPage);
+		printf("new VPN: %d\n",vpn);
 	}
 	else {
 		
@@ -433,10 +444,10 @@ ProcessAddressSpace::handlePageFault(int vpn){
 		// DEBUG('a',"REPLACEMENT");
 		int vpn_old = pagetoVPN[newPage];
 		// DEBUG('a',"vpn_old:%d",vpn_old);
-		printf("vpn_old:%d newpage: %d\n", vpn_old, newPage);
+		//printf("vpn_old:%d newpage: %d\n", vpn_old, newPage);
 		NachOSThread *old_thread = pagetothread[newPage];
-		printf("vpn_old:%d PID: %d\n", vpn_old,old_thread->GetPID());
-		printf("vpn_old:%d newPID: %d\n", vpn_old,currentThread->GetPID());
+		//printf("vpn_old:%d PID: %d\n", vpn_old,old_thread->GetPID());
+		//printf("vpn_old:%d newPID: %d\n", vpn_old,currentThread->GetPID());
 		
 		TranslationEntry *old_table = (old_thread->space)->GetPageTable();
 		old_table[vpn_old].valid = FALSE;
@@ -451,11 +462,17 @@ ProcessAddressSpace::handlePageFault(int vpn){
 			}
 			old_table[vpn_old].backup = TRUE;
 		}
+		printf("old vpn: %d\n",vpn_old);	
+		printf("old pid: %d\n",old_thread->GetPID());	
+		printf("new pid: %d\n",currentThread->GetPID());	
+		printf("newPyhPage: %d\n",newPage);
+		printf("new VPN: %d\n",vpn);
 	}
+	
 	FIFO[newPage] = stats->totalTicks;
 	LRU[newPage] = stats->totalTicks;
 	LRUCLOCK[newPage] = 1;
-	printf("newPage:%d vpn: %d\n", newPage,vpn);
+	//printf("newPage:%d vpn: %d\n", newPage,vpn);
 	/*
 	   if(pagetoShared[newPage]==FALSE){
 	   FIFOlist->Append((void *)newPage);
@@ -467,11 +484,11 @@ ProcessAddressSpace::handlePageFault(int vpn){
 	machine->KernelPageTable[vpn].valid = TRUE;
 	machine->KernelPageTable[vpn].dirty = FALSE;
 	if(machine->KernelPageTable[vpn].backup==FALSE){
-		printf("executable\n");
+		//printf("executable\n");
 		//TODO need to read from executable
 		// OpenFile *executable = fileSystem->Open(execFile);
 		if (executableVar == NULL) {
-			printf("Empty file\n");
+			//printf("Empty file\n");
 			ASSERT(false);
 		}
 		NoffHeader noffH;
@@ -485,7 +502,7 @@ ProcessAddressSpace::handlePageFault(int vpn){
 		executableVar->ReadAt(&(machine->mainMemory[newPage * PageSize ]),PageSize, noffH.code.inFileAddr + vpn*PageSize);
 	}
 	else{
-		printf("backup\n");
+		//printf("backup\n");
 		//READ from backup
 		for(int i=0;i<PageSize;i++){
 			machine->mainMemory[newPage * PageSize + i ] = (currentThread->space)->backup_mem[vpn*PageSize+i];
