@@ -15,7 +15,6 @@
 
 #include "copyright.h"
 #include "filesys.h"
-
 #define UserStackSize		1024 	// increase this as necessary!
 
 class ProcessAddressSpace {
@@ -24,7 +23,7 @@ class ProcessAddressSpace {
 					// initializing it with the program
 					// stored in the file "executable"
 
-    ProcessAddressSpace (ProcessAddressSpace *parentSpace, NachOSThread *child_thread);	// Used by fork
+    ProcessAddressSpace(ProcessAddressSpace *parentSpace, int child_pid);	// Used by fork
 
     ~ProcessAddressSpace();			// De-allocate an address space
 
@@ -40,7 +39,9 @@ class ProcessAddressSpace {
     
     void setKernelPageTable(TranslationEntry *ktable, unsigned int numV);
     char *execFile;
+    OpenFile *executableVar;
     void handlePageFault(int vpn);
+    char *backup_mem;
   private:
     TranslationEntry *KernelPageTable;	// Assume linear page table translation
 					// for now!

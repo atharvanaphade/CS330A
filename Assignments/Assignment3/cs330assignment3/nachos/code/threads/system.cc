@@ -7,7 +7,7 @@
 
 #include "copyright.h"
 #include "system.h"
-
+#include "../machine/machine.h"
 // This defines *all* of the global data structures used by Nachos.
 // These are all initialized and de-allocated by this file.
 
@@ -36,8 +36,12 @@ int cpu_burst_start_time;        // Records the start of current CPU burst
 int completionTimeArray[MAX_THREAD_COUNT];        // Records the completion time of all simulated threads
 bool excludeMainThread;		// Used by completion time statistics calculation
 
+int PageAlgo;
 int pagetoVPN[NumPhysPages];
+bool pagetoShared[NumPhysPages];
 NachOSThread *pagetothread[NumPhysPages];
+
+List *FIFOlist;
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -133,12 +137,15 @@ Initialize(int argc, char **argv)
     
     excludeMainThread = FALSE;
 
+    FIFOlist = new List();
+
     for (i=0; i<MAX_THREAD_COUNT; i++) { threadArray[i] = NULL; exitThreadArray[i] = false; completionTimeArray[i] = -1; }
     thread_index = 0;
 
     for (i=0; i<NumPhysPages; i++){
         pagetoVPN[i] = -1;
         pagetothread[i] = NULL;
+        pagetoShared[i] = FALSE;
     }
 
     sleepQueueHead = NULL;

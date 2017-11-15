@@ -83,7 +83,6 @@ class NachOSThread {
     int machineState[MachineStateSize];  // all registers except for stackTop
 
   public:
-    char *backup_mem[NumPhysPages*PageSize];
 
     NachOSThread(char* debugName, int nice);		// initialize a NachOSThread 
     ~NachOSThread(); 				// deallocate a NachOSThread
